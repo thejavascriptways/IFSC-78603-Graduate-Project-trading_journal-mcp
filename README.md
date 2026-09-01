@@ -71,7 +71,10 @@ flowchart LR
 │   ├── application_requirements.md
 │   ├── deployment_plan.md
 │   ├── implementation_plan.md
-│   └── prototype_baseline.md
+│   ├── prototype_baseline.md
+│   └── proposal/
+│       ├── Trading_Journal_MCP_Proposal_Revised.docx
+│       └── Trading_Journal_MCP_Proposal_Revised.pdf
 ├── scripts/
 │   └── mcp_demo_client.py      # External MCP client demo
 ├── tests/
@@ -336,10 +339,14 @@ This is a prototype/graduate-project application, not a production trading syste
 
 The project roadmap is documented in:
 
+- [Accepted Revised Final Proposal - PDF](docs/proposal/Trading_Journal_MCP_Proposal_Revised.pdf)
+- [Accepted Revised Final Proposal - Word](docs/proposal/Trading_Journal_MCP_Proposal_Revised.docx)
 - [Application Requirements](docs/application_requirements.md)
 - [Implementation Plan](docs/implementation_plan.md)
 - [Deployment Plan](docs/deployment_plan.md)
 - [Prototype Baseline](docs/prototype_baseline.md)
+
+`PROPOSAL.md` is the earlier short proposal draft. The revised final proposal accepted by the professor is stored under `docs/proposal/`.
 
 ## Recommended Next Build Step
 
