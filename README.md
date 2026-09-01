@@ -1,32 +1,125 @@
-# Trading Journal
+# Trading Journal MCP
 
-`Trading Journal` is a local-first Python application for tracking portfolios, recording manual trades, and preparing for broker sync and MCP exposure in later phases.
+Trading Journal MCP is a Python/FastAPI portfolio and trade-journaling application built as a practical Model Context Protocol (MCP) use case. The current codebase is the accepted prototype for a graduate project and is now being evolved into the full application.
 
-## What is included in this starter build
+The app helps track accounts, holdings, manual trades, open positions, closed positions, realized profit/loss, unrealized profit/loss, and the reason behind every trade. It also exposes portfolio and market-data capabilities through MCP servers so external clients can discover and call application features in a standard way.
 
-- FastAPI backend with a simple HTML interface
-- SQLite-backed portfolio database
-- Default account types for `IBKR Live` and `Manual Fidelity`
-- Opening holding import flow for current Fidelity positions
-- Manual trade entry flow with required trade reason
-- Close-position workflow with prefilled sell entries
-- Position updates and realized P&L using average-cost accounting
-- Manual mark-price updates for unrealized P&L on open positions
-- External live market-data page for open and closed positions
-- Refresh open-position marks by calling a second MCP server backed by Alpaca market data
-- Dashboard P&L tables for overall, by account, and by account plus asset class
-- JSON API endpoints and a mounted MCP server over the same portfolio service layer
+## Project Goals
 
-## Quick start
+- Build a day-to-day trading journal for portfolio review and trade reasoning.
+- Demonstrate MCP concepts using a real financial application instead of a toy example.
+- Support multiple asset classes such as stocks, ETFs, mutual funds, bonds, options, and cash.
+- Track realized and unrealized P&L across accounts and asset classes.
+- Show how an application can act as both an MCP server and an MCP client.
+- Prepare for future IBKR broker sync, stock news, order staging, paper trading, and safe live-trading workflows.
 
-1. Create a virtual environment and activate it.
-2. Install the project:
+## Prototype Features Included
+
+- FastAPI backend with server-rendered HTML pages.
+- SQLite-backed local database.
+- Default accounts for `IBKR Live` and `Manual Fidelity`.
+- Manual import flow for existing holdings.
+- Manual buy/sell trade entry.
+- Required trade reason field for every manual trade.
+- Position updates using average-cost accounting.
+- Partial close and full close behavior.
+- Closed positions page with realized P&L.
+- Manual mark-price updates for unrealized P&L.
+- Dashboard P&L tables for overall, account-level, and account plus asset-class reporting.
+- Market-data page for portfolio symbols.
+- Alpaca-backed market-data integration for supported stocks, ETFs, and options.
+- Trading Journal MCP server.
+- Market Data MCP server.
+- Internal MCP client calls from the web app to the Market Data MCP server.
+- External command-line MCP demo client.
+- Planning documents for requirements, implementation, deployment, and prototype baseline.
+
+## Current Architecture
+
+```mermaid
+flowchart LR
+    U["User"] --> UI["FastAPI Web UI"]
+    UI --> SVC["Application Services"]
+    SVC --> DB["SQLite Database"]
+    UI --> HOST["Internal MCP Client"]
+
+    HOST --> PMCP["Trading Journal MCP Server"]
+    HOST --> MMCP["Market Data MCP Server"]
+
+    PMCP --> DB
+    MMCP --> ALPACA["Alpaca Market Data API"]
+
+    CLI["External MCP Demo Client"] --> PMCP
+    CLI --> MMCP
+```
+
+## Repository Structure
+
+```text
+.
+├── app/
+│   ├── main.py                 # FastAPI app, routes, mounted MCP servers
+│   ├── config.py               # Environment-based settings
+│   ├── db.py                   # SQLAlchemy database setup
+│   ├── mcp_server.py           # Trading Journal MCP server
+│   ├── market_data_mcp.py      # Market Data MCP server
+│   ├── models/                 # SQLAlchemy entities and enums
+│   ├── services/               # Portfolio, market data, and MCP host logic
+│   ├── static/                 # CSS
+│   └── templates/              # Jinja2 HTML templates
+├── docs/
+│   ├── application_requirements.md
+│   ├── deployment_plan.md
+│   ├── implementation_plan.md
+│   └── prototype_baseline.md
+├── scripts/
+│   └── mcp_demo_client.py      # External MCP client demo
+├── tests/
+│   ├── test_trade_flow.py
+│   └── test_mcp_flow.py
+├── tools/
+│   └── build_revised_proposal.py
+├── PROPOSAL.md
+├── pyproject.toml
+└── README.md
+```
+
+## Prerequisites
+
+- Python 3.12 or newer.
+- Git.
+- Optional Alpaca paper-trading/market-data API keys if you want live market data.
+
+The app can run without Alpaca keys, but live quote calls will show a configuration warning until keys are set.
+
+## Download The Project
+
+Clone the repository:
 
 ```bash
+git clone https://github.com/thejavascriptways/IFSC-78603-Graduate-Project-trading_journal-mcp.git
+cd IFSC-78603-Graduate-Project-trading_journal-mcp
+```
+
+## Local Setup
+
+Create and activate a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the application with development dependencies:
+
+```bash
+python3 -m pip install --upgrade pip
 python3 -m pip install -e ".[dev]"
 ```
 
-3. Set your external market-data credentials:
+## Optional Market Data Setup
+
+Set Alpaca credentials if you want the market-data page and Market Data MCP server to call Alpaca:
 
 ```bash
 export ALPACA_API_KEY_ID="your-key-id"
@@ -35,33 +128,108 @@ export ALPACA_STOCK_FEED="iex"
 export ALPACA_OPTION_FEED="indicative"
 ```
 
-4. Run the app:
+If you have paid real-time data entitlements, you can change the feeds:
+
+```bash
+export ALPACA_STOCK_FEED="sip"
+export ALPACA_OPTION_FEED="opra"
+```
+
+Asset-class notes:
+
+- Stocks and ETFs can use Alpaca stock feeds.
+- Options require appropriate options-data entitlement for true OPRA quotes.
+- Mutual funds usually publish NAV once per business day rather than live intraday quotes.
+- Bonds are not covered by Alpaca stock/options quote feeds.
+
+## Run The Web App
+
+Start the local server:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-5. Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+Open the app:
 
-The database defaults to `sqlite:///./trading_journal.db`. Set `TRADING_JOURNAL_DATABASE_URL` to change it.
-If you have Alpaca real-time entitlements, you can switch to `ALPACA_STOCK_FEED=sip` and `ALPACA_OPTION_FEED=opra`.
+```text
+http://127.0.0.1:8000/
+```
 
-## MCP endpoint
+If `--reload` causes a permission issue on macOS or in a restricted environment, run without reload:
 
-The app now mounts two MCP servers:
+```bash
+uvicorn app.main:app
+```
 
-- Trading Journal MCP: [http://127.0.0.1:8000/mcp/](http://127.0.0.1:8000/mcp/)
-- Market Data MCP: [http://127.0.0.1:8000/market-data-mcp/](http://127.0.0.1:8000/market-data-mcp/)
+## How To Use The Current App
 
-Use the included command-line MCP client after the app is running. This script acts like a separate external client that discovers and uses the app's MCP capabilities over HTTP.
+1. Open the dashboard at `http://127.0.0.1:8000/`.
+2. Use **Import Holdings** to manually add existing Fidelity or other manual holdings.
+3. Use **Add Trade** to manually record buy or sell trades.
+4. Enter a clear trade reason. The app requires this field.
+5. Use **Positions** to review open holdings, update mark prices, refresh market data, or close positions.
+6. Use **Closed Positions** to review realized P&L after a position is fully closed.
+7. Use **Market Data** to view quote data and provider status for portfolio symbols.
+8. Use the MCP demo client to show how external clients discover and call MCP capabilities.
 
-Explain what the CLI is demonstrating:
+## MCP Endpoints
+
+The app currently mounts two MCP servers:
+
+```text
+Trading Journal MCP: http://127.0.0.1:8000/mcp/
+Market Data MCP:     http://127.0.0.1:8000/market-data-mcp/
+```
+
+### Trading Journal MCP Server
+
+Current tools:
+
+- `get_portfolio_summary`
+- `list_accounts`
+- `list_positions`
+- `list_trades`
+- `add_opening_holding`
+- `add_manual_trade`
+
+Current resources:
+
+- `portfolio://summary`
+- `portfolio://positions`
+
+Current prompts:
+
+- `daily_portfolio_review`
+- `journal_follow_up`
+
+### Market Data MCP Server
+
+Current tools:
+
+- `get_market_data_capabilities`
+- `get_equity_snapshots`
+- `get_option_snapshots`
+
+Current resources:
+
+- `market-data://capabilities`
+
+Current prompts:
+
+- `market_data_health_check`
+
+## Demonstrate MCP From The Command Line
+
+Run these commands after the web app is running.
+
+Explain what the demo client shows:
 
 ```bash
 python3 scripts/mcp_demo_client.py explain
 ```
 
-Show both MCP servers exposed by the app:
+List MCP servers exposed by the app:
 
 ```bash
 python3 scripts/mcp_demo_client.py servers
@@ -74,13 +242,18 @@ python3 scripts/mcp_demo_client.py discover
 python3 scripts/mcp_demo_client.py tools
 python3 scripts/mcp_demo_client.py resources
 python3 scripts/mcp_demo_client.py prompts
+```
+
+Call portfolio tools and resources:
+
+```bash
 python3 scripts/mcp_demo_client.py summary
 python3 scripts/mcp_demo_client.py call list_positions --arguments '{"symbol":"VOO"}'
 python3 scripts/mcp_demo_client.py read-resource portfolio://summary
 python3 scripts/mcp_demo_client.py get-prompt daily_portfolio_review --arguments '{"focus":"risk"}'
 ```
 
-Run a guided portfolio MCP workflow:
+Run a guided portfolio review:
 
 ```bash
 python3 scripts/mcp_demo_client.py portfolio-review --focus risk
@@ -93,13 +266,18 @@ python3 scripts/mcp_demo_client.py --server market discover
 python3 scripts/mcp_demo_client.py --server market tools
 python3 scripts/mcp_demo_client.py --server market resources
 python3 scripts/mcp_demo_client.py --server market prompts
+```
+
+Call market-data tools:
+
+```bash
 python3 scripts/mcp_demo_client.py --server market call get_market_data_capabilities
 python3 scripts/mcp_demo_client.py --server market call get_equity_snapshots --arguments '{"symbols":["AAPL","MSFT"]}'
 python3 scripts/mcp_demo_client.py --server market read-resource market-data://capabilities
 python3 scripts/mcp_demo_client.py --server market get-prompt market_data_health_check --arguments '{"symbols":"AAPL,MSFT"}'
 ```
 
-Run a guided market-data MCP workflow:
+Run a guided market-data check:
 
 ```bash
 python3 scripts/mcp_demo_client.py market-check --symbols AAPL,MSFT
@@ -111,47 +289,66 @@ Run the complete multi-server demo:
 python3 scripts/mcp_demo_client.py client-demo
 ```
 
-## MCP topology in this build
+The CLI also supports a remote base URL, which will be useful after deployment:
 
-This project is now a better MCP example because it has both roles:
+```bash
+python3 scripts/mcp_demo_client.py --base-url https://your-demo-url.example discover
+```
 
-- `Trading Journal` is an MCP server for portfolio data and trade actions.
-- `Trading Journal` also acts as an MCP client when it refreshes prices from the separate `Market Data MCP` server.
-- `Market Data MCP` is a second MCP server whose job is to reach the external Alpaca market-data service.
+## Run Tests
 
-That means the app is no longer just "a website with one MCP endpoint". It is now a small multi-server MCP system.
+Run the automated test suite:
 
-## Current workflow
+```bash
+python3 -m pytest
+```
 
-- Review the dashboard
-- Import your opening Fidelity holdings
-- Open `/market-data` to view live external market data for open and closed positions
-- Refresh open positions from `/positions` with `Refresh Quotes via MCP`
-- Use the close-position flow or the manual trade entry screen
-- Save a trade with a required `trade_reason`
-- Review open positions, closed positions, realized P&L, and recent activity
-- Explore both MCP servers through the demo client
+Current baseline result at prototype freeze:
 
-## Asset-class notes
+```text
+8 passed
+```
 
-- Stocks and ETFs can use Alpaca real-time feeds.
-- Options require OPRA entitlement for true non-delayed quotes; the `indicative` feed is not equivalent to OPRA.
-- Mutual funds generally publish NAV once per business day rather than live intraday quotes.
-- Bonds are not covered by the Alpaca stock/options feeds.
+The tests cover:
 
-## Next implementation phases
+- Manual trade position updates.
+- Required trade reason validation.
+- Opening holding imports.
+- Duplicate import rejection.
+- Partial sell and full close behavior.
+- Realized and unrealized P&L.
+- Dashboard P&L summaries.
+- Trading Journal MCP discovery and tool calls.
+- Market Data MCP discovery and capability calls.
 
-- IBKR sync worker and production-grade live market data ingestion
-- richer MCP prompts, notifications, and journaling workflows
-- Authentication and deployment hardening
+## Important Safety Notes
 
+This is a prototype/graduate-project application, not a production trading system.
 
-## Command line interface commands
+- Do not commit `.env` files or API keys.
+- Do not commit local SQLite databases.
+- Do not use real broker credentials in a public demo environment.
+- Live trading is not implemented in the current prototype.
+- Future live trading must require explicit user confirmation, audit logging, and safety gates.
+- Public professor demos should use sample data and simulated/paper trading only.
 
-- python3 scripts/mcp_demo_client.py explain
-- python3 scripts/mcp_demo_client.py servers
-- python3 scripts/mcp_demo_client.py discover
-- python3 scripts/mcp_demo_client.py portfolio-review --focus risk
-- python3 scripts/mcp_demo_client.py --server market discover
-- python3 scripts/mcp_demo_client.py market-check --symbols AAPL,MSFT
-- python3 scripts/mcp_demo_client.py client-demo
+## Planning Documents
+
+The project roadmap is documented in:
+
+- [Application Requirements](docs/application_requirements.md)
+- [Implementation Plan](docs/implementation_plan.md)
+- [Deployment Plan](docs/deployment_plan.md)
+- [Prototype Baseline](docs/prototype_baseline.md)
+
+## Recommended Next Build Step
+
+The next implementation step is to add the real application foundation:
+
+1. Expanded data models for audit events, news, broker connections, and order tickets.
+2. Correlation ID middleware.
+3. Full audit logging for user actions, MCP requests, external API calls, and errors.
+4. Audit log viewer screen.
+5. Tests for audit creation and secret redaction.
+
+This foundation should be completed before IBKR broker sync, paper trading, or any future live trading workflow.
