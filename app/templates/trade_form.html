@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="form-layout">
+  <article class="card form-card">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">{{ "Close Workflow" if form_mode == "close" else "Manual Entry" }}</p>
+        <h2>{{ "Close Position" if form_mode == "close" else "Add Trade" }}</h2>
+      </div>
+      <p class="helper-copy">
+        {% if form_mode == "close" and close_position %}
+        This form is prefilled to close {{ close_position.instrument.symbol }}. You can reduce the quantity for a partial close.
+        {% else %}
+        Use this for manual Fidelity entries and any trade you want journaled by hand.
+        {% endif %}
+      </p>
+    </div>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    {% if form_mode == "close" and close_position %}
+    <div class="notice-banner">
+      Open quantity: {{ close_position.quantity }} · Average cost: ${{ "%.2f"|format(close_position.average_cost) }}
+      {% if close_position.market_price is not none %}
+      · Current mark: ${{ "%.2f"|format(close_position.market_price) }}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <form action="/trades" method="post" class="trade-form">
+      <input type="hidden" name="form_mode" value="{{ defaults.form_mode }}" />
+      <input type="hidden" name="position_id" value="{{ defaults.position_id }}" />
+
+      <label>
+        Account
+        <select name="account_id" required>
+          {% for account in accounts %}
+          <option value="{{ account.id }}" {% if defaults.account_id|string == account.id|string %}selected{% endif %}>{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        Symbol
+        <input type="text" name="symbol" placeholder="AAPL" value="{{ defaults.symbol }}" required />
+      </label>
+
+      <label>
+        Description
+        <input type="text" name="description" placeholder="Apple Inc." value="{{ defaults.description }}" />
+      </label>
+
+      <label>
+        Asset Class
+        <select name="asset_class" required>
+          {% for asset_class in asset_classes %}
+          <option value="{{ asset_class }}" {% if defaults.asset_class == asset_class.value %}selected{% endif %}>{{ asset_class }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        Trade Date
+        <input type="date" name="trade_date" value="{{ defaults.trade_date }}" required />
+      </label>
+
+      <label>
+        Side
+        <select name="side" required>
+          {% for side in sides %}
+          <option value="{{ side }}" {% if defaults.side == side.value %}selected{% endif %}>{{ side }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        Quantity
+        <input type="number" name="quantity" step="0.000001" min="0.000001" value="{{ defaults.quantity }}" required />
+      </label>
+
+      <label>
+        Price
+        <input type="number" name="price" step="0.000001" min="0" value="{{ defaults.price }}" required />
+      </label>
+
+      <label>
+        Fees
+        <input type="number" name="fees" step="0.000001" min="0" value="{{ defaults.fees }}" required />
+      </label>
+
+      <label>
+        Currency
+        <input type="text" name="currency" value="{{ defaults.currency }}" maxlength="8" required />
+      </label>
+
+      <label class="full-span">
+        Trade Reason
+        <textarea name="reason" rows="4" placeholder="Why did I take this trade?" required>{{ defaults.reason }}</textarea>
+      </label>
+
+      <label class="full-span">
+        Notes
+        <textarea name="notes" rows="4" placeholder="Execution details, risk plan, exit idea, or follow-up notes.">{{ defaults.notes }}</textarea>
+      </label>
+
+      <button type="submit" class="primary-button">{{ "Save Close Trade" if form_mode == "close" else "Save Trade" }}</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

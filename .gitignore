@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local application data
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Generated artifacts
+output/
+tmp/
+*.log
+
+# Build/package artifacts
+build/
+dist/
+*.egg-info/
+
+# macOS/editor files
+.DS_Store
+.idea/
+.vscode/

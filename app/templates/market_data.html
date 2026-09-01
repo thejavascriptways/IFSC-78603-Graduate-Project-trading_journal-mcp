@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-grid">
+  <article class="card">
+    <p class="eyebrow">External Feed</p>
+    <h2>Live Market Data</h2>
+    <p class="helper-copy">
+      This page now pulls live market data from an external provider through the separate Market Data MCP server.
+      Open and closed positions are shown together so you can inspect your current watchlist in one place.
+    </p>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    {% if notice %}
+    <div class="notice-banner">{{ notice }}</div>
+    {% endif %}
+
+    <div class="action-row">
+      <a href="/market-data" class="primary-link">Refresh Live Table</a>
+      <a href="/positions" class="secondary-link">Refresh Open Position Marks</a>
+    </div>
+  </article>
+
+  <article class="card">
+    <p class="eyebrow">Provider</p>
+    <h3>{{ capabilities.provider or "market-data" }}</h3>
+    <ul class="plain-list">
+      <li>Trading Journal MCP: <code>{{ trading_journal_mcp_url }}</code></li>
+      <li>Market Data MCP: <code>{{ market_data_mcp_url }}</code></li>
+      <li>Stock feed: <code>{{ capabilities.stock_feed or "n/a" }}</code></li>
+      <li>Option feed: <code>{{ capabilities.option_feed or "n/a" }}</code></li>
+      <li>Configured: {{ "Yes" if capabilities.configured else "No" }}</li>
+    </ul>
+  </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Coverage Notes</p>
+      <h2>Asset-Class Support</h2>
+    </div>
+    <a href="/positions" class="secondary-link">Open Positions</a>
+  </div>
+  <ul class="plain-list">
+    {% for note in capabilities.notes or [] %}
+    <li>{{ note }}</li>
+    {% else %}
+    <li>No provider notes available.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Portfolio Watchboard</p>
+      <h2>Open And Closed Positions</h2>
+    </div>
+    <a href="/api/market-data/live" class="secondary-link">JSON API</a>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Account</th>
+          <th>Symbol</th>
+          <th>Asset Class</th>
+          <th>Quantity</th>
+          <th>Mark Price</th>
+          <th>Last Trade</th>
+          <th>Bid</th>
+          <th>Ask</th>
+          <th>Day Change %</th>
+          <th>Live Unrealized P&amp;L</th>
+          <th>As Of</th>
+          <th>Feed</th>
+          <th>Data Status</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in market_data_rows %}
+        <tr>
+          <td>{{ row.status }}</td>
+          <td>{{ row.account_name }}</td>
+          <td>{{ row.symbol }}</td>
+          <td>{{ row.asset_class }}</td>
+          <td>{{ row.quantity or "-" }}</td>
+          <td>{% if row.mark_price %}${{ "%.2f"|format(row.mark_price|float) }}{% else %}-{% endif %}</td>
+          <td>{% if row.last_trade_price %}${{ "%.2f"|format(row.last_trade_price|float) }}{% else %}-{% endif %}</td>
+          <td>{% if row.bid_price %}${{ "%.2f"|format(row.bid_price|float) }}{% else %}-{% endif %}</td>
+          <td>{% if row.ask_price %}${{ "%.2f"|format(row.ask_price|float) }}{% else %}-{% endif %}</td>
+          <td>
+            {% if row.change_percent is not none %}
+            {{ "%.2f"|format(row.change_percent|float) }}%
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td class="{{ 'positive' if row.live_unrealized_pnl and row.live_unrealized_pnl|float >= 0 else 'negative' if row.live_unrealized_pnl else '' }}">
+            {% if row.live_unrealized_pnl %}
+            ${{ "%.2f"|format(row.live_unrealized_pnl|float) }}
+            {% if row.live_unrealized_pct %}
+            ({{ "%.2f"|format(row.live_unrealized_pct|float) }}%)
+            {% endif %}
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td>{{ row.as_of or "-" }}</td>
+          <td>{{ row.feed or "-" }}</td>
+          <td>{{ row.market_data_status }}</td>
+          <td>{{ row.note or "-" }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="15">No positions are available for live market-data display yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

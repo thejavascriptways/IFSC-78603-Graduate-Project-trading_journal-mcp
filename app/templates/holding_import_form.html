@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="form-layout">
+  <article class="card form-card">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Starting Portfolio</p>
+        <h2>Import Opening Holding</h2>
+      </div>
+      <p class="helper-copy">Use this once per existing manual position so Trading Journal starts with the right quantity and cost basis.</p>
+    </div>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    <form action="/holdings/import" method="post" class="trade-form">
+      <label>
+        Manual Account
+        <select name="account_id" required>
+          {% for account in accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        Symbol
+        <input type="text" name="symbol" placeholder="VOO" required />
+      </label>
+
+      <label>
+        Description
+        <input type="text" name="description" placeholder="Vanguard S&P 500 ETF" />
+      </label>
+
+      <label>
+        Asset Class
+        <select name="asset_class" required>
+          {% for asset_class in asset_classes %}
+          <option value="{{ asset_class }}">{{ asset_class }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        Opening Date
+        <input type="date" name="opening_date" value="{{ today }}" required />
+      </label>
+
+      <label>
+        Quantity
+        <input type="number" name="quantity" step="0.000001" min="0.000001" required />
+      </label>
+
+      <label>
+        Average Cost
+        <input type="number" name="average_cost" step="0.000001" min="0" required />
+      </label>
+
+      <label>
+        Currency
+        <input type="text" name="currency" value="USD" maxlength="8" required />
+      </label>
+
+      <label class="full-span">
+        Notes
+        <textarea name="notes" rows="4" placeholder="Optional context about where this opening position came from."></textarea>
+      </label>
+
+      <button type="submit" class="primary-button">Import Holding</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

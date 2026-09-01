@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">History</p>
+      <h2>Closed Positions</h2>
+    </div>
+    <a href="/positions" class="secondary-link">Back to open positions</a>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Account</th>
+        <th>Symbol</th>
+        <th>Asset Class</th>
+        <th>Opened On</th>
+        <th>Closed On</th>
+        <th>Trades</th>
+        <th>Last Exit Price</th>
+        <th>Realized P&amp;L</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for position in closed_positions %}
+      <tr>
+        <td>{{ position.account_name }}</td>
+        <td>{{ position.symbol }}</td>
+        <td>{{ position.asset_class }}</td>
+        <td>{{ position.opened_on }}</td>
+        <td>{{ position.closed_on }}</td>
+        <td>{{ position.trade_count }}</td>
+        <td>${{ "%.2f"|format(position.last_exit_price|float) }}</td>
+        <td class="{{ 'positive' if position.realized_pnl_total|float >= 0 else 'negative' }}">
+          ${{ "%.2f"|format(position.realized_pnl_total|float) }}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8">No closed positions yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

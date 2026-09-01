@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title or "Trading Journal" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Portfolio + Journal</p>
+        <h1>Trading Journal</h1>
+      </div>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/holdings/import">Import Holdings</a>
+        <a href="/trades/new">Add Trade</a>
+        <a href="/trades">Trades</a>
+        <a href="/positions">Positions</a>
+        <a href="/market-data">Market Data</a>
+        <a href="/positions/closed">Closed Positions</a>
+      </nav>
+    </header>
+    <main class="page-shell">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

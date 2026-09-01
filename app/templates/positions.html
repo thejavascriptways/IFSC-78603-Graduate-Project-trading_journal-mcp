@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Portfolio</p>
+      <h2>Open Positions</h2>
+    </div>
+    <div class="action-row">
+      <a href="/positions/closed" class="secondary-link">Closed positions</a>
+      <form action="/positions/refresh-market-data" method="post" class="action-form">
+        <button type="submit" class="secondary-button">Refresh Quotes via MCP</button>
+      </form>
+      <a href="/market-data" class="secondary-link">Live Market Data</a>
+      <a href="/trades/new" class="primary-link">Add trade</a>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="error-banner">{{ error }}</div>
+  {% endif %}
+
+  {% if notice %}
+  <div class="notice-banner">{{ notice }}</div>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Account</th>
+        <th>Symbol</th>
+        <th>Asset Class</th>
+        <th>Quantity</th>
+        <th>Average Cost</th>
+        <th>Cost Basis</th>
+        <th>Mark Price</th>
+        <th>Market Value</th>
+        <th>Unrealized P&amp;L</th>
+        <th>Update Mark</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for position in positions %}
+      <tr>
+        <td>{{ position.account.name }}</td>
+        <td>{{ position.instrument.symbol }}</td>
+        <td>{{ position.instrument.asset_class.value }}</td>
+        <td>{{ position.quantity }}</td>
+        <td>${{ "%.2f"|format(position.average_cost) }}</td>
+        <td>${{ "%.2f"|format(position.cost_basis) }}</td>
+        <td>
+          {% if position.market_price is not none %}
+          ${{ "%.2f"|format(position.market_price) }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td>
+          {% if position.market_value is not none %}
+          ${{ "%.2f"|format(position.market_value) }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td class="{{ 'positive' if (position.unrealized_pnl or 0) >= 0 else 'negative' }}">
+          {% if position.unrealized_pnl is not none %}
+          ${{ "%.2f"|format(position.unrealized_pnl) }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td>
+          <form action="/positions/{{ position.id }}/mark" method="post" class="inline-form">
+            <input
+              type="number"
+              name="market_price"
+              step="0.000001"
+              min="0"
+              value="{{ position.market_price if position.market_price is not none else position.average_cost }}"
+              required
+            />
+            <button type="submit" class="secondary-button">Update</button>
+          </form>
+        </td>
+        <td>
+          <a href="/trades/new?position_id={{ position.id }}" class="secondary-link">Close Position</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="11">No open positions yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

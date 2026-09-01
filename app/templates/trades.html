@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Activity</p>
+      <h2>Trades</h2>
+    </div>
+    <a href="/trades/new" class="primary-link">Add manual trade</a>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Origin</th>
+        <th>Account</th>
+        <th>Symbol</th>
+        <th>Asset Class</th>
+        <th>Side</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Fees</th>
+        <th>Realized P&L</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trade in trades %}
+      <tr>
+        <td>{{ trade.trade_date }}</td>
+        <td>{{ trade.origin.value }}</td>
+        <td>{{ trade.account.name }}</td>
+        <td>{{ trade.instrument.symbol }}</td>
+        <td>{{ trade.instrument.asset_class.value }}</td>
+        <td>{{ trade.side.value }}</td>
+        <td>{{ trade.quantity }}</td>
+        <td>${{ "%.2f"|format(trade.price) }}</td>
+        <td>${{ "%.2f"|format(trade.fees) }}</td>
+        <td>
+          {% if trade.realized_pnl is not none %}
+          ${{ "%.2f"|format(trade.realized_pnl) }}
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td>{{ trade.reason }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="11">No trades recorded yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

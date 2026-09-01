@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero-grid">
+  <article class="card">
+    <p class="eyebrow">Accounts</p>
+    <h2>{{ accounts|length }}</h2>
+    <ul class="plain-list">
+      {% for account in accounts %}
+      <li>{{ account.name }} · {{ account.source.value }}</li>
+      {% endfor %}
+    </ul>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Open Positions</p>
+    <h2>{{ portfolio_summary.open_position_count }}</h2>
+    <p>Total cost basis: ${{ "%.2f"|format(total_cost_basis) }}</p>
+    <p>Total market value: ${{ "%.2f"|format(portfolio_summary.total_market_value|float) }}</p>
+  </article>
+  <article class="card accent">
+    <p class="eyebrow">P&L Snapshot</p>
+    <h2 class="{{ 'positive' if portfolio_summary.unrealized_pnl_total|float >= 0 else 'negative' }}">
+      ${{ "%.2f"|format(portfolio_summary.unrealized_pnl_total|float) }}
+    </h2>
+    <p>Unrealized P&amp;L across open positions.</p>
+    <p><a href="/positions">Refresh prices from Market Data MCP</a></p>
+  </article>
+  <article class="card">
+    <p class="eyebrow">Closed Positions</p>
+    <h2>{{ portfolio_summary.closed_position_count }}</h2>
+    <p class="{{ 'positive' if portfolio_summary.realized_pnl_total|float >= 0 else 'negative' }}">
+      Realized P&amp;L: ${{ "%.2f"|format(portfolio_summary.realized_pnl_total|float) }}
+    </p>
+  </article>
+</section>
+
+<section class="stack-grid">
+  <article class="card">
+    <div class="section-head">
+      <h3>Overall P&amp;L</h3>
+      <a href="/positions">Open positions</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th>Open Cost Basis</th>
+            <th>Market Value</th>
+            <th>Unrealized P&amp;L</th>
+            <th>Unrealized %</th>
+            <th>Realized Cost Basis</th>
+            <th>Realized P&amp;L</th>
+            <th>Realized %</th>
+            <th>Total Basis</th>
+            <th>Total P&amp;L</th>
+            <th>Total %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set overall = portfolio_summary.performance_overall %}
+          <tr>
+            <td>{{ overall.label }}</td>
+            <td>${{ "%.2f"|format(overall.open_cost_basis|float) }}</td>
+            <td>${{ "%.2f"|format(overall.market_value|float) }}</td>
+            <td class="{{ 'positive' if overall.unrealized_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(overall.unrealized_pnl|float) }}
+            </td>
+            <td>
+              {% if overall.unrealized_pct is not none %}
+              {{ "%.2f"|format(overall.unrealized_pct|float) }}%
+              {% else %}
+              -
+              {% endif %}
+            </td>
+            <td>${{ "%.2f"|format(overall.realized_cost_basis|float) }}</td>
+            <td class="{{ 'positive' if overall.realized_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(overall.realized_pnl|float) }}
+            </td>
+            <td>
+              {% if overall.realized_pct is not none %}
+              {{ "%.2f"|format(overall.realized_pct|float) }}%
+              {% else %}
+              -
+              {% endif %}
+            </td>
+            <td>${{ "%.2f"|format(overall.total_basis|float) }}</td>
+            <td class="{{ 'positive' if overall.total_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(overall.total_pnl|float) }}
+            </td>
+            <td>
+              {% if overall.total_pct is not none %}
+              {{ "%.2f"|format(overall.total_pct|float) }}%
+              {% else %}
+              -
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3>P&amp;L By Account</h3>
+      <a href="/positions/closed">Closed positions</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Open Cost Basis</th>
+            <th>Market Value</th>
+            <th>Unrealized P&amp;L</th>
+            <th>Unrealized %</th>
+            <th>Realized Cost Basis</th>
+            <th>Realized P&amp;L</th>
+            <th>Realized %</th>
+            <th>Total Basis</th>
+            <th>Total P&amp;L</th>
+            <th>Total %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in portfolio_summary.performance_by_account %}
+          <tr>
+            <td>{{ row.account_name }}</td>
+            <td>${{ "%.2f"|format(row.open_cost_basis|float) }}</td>
+            <td>${{ "%.2f"|format(row.market_value|float) }}</td>
+            <td class="{{ 'positive' if row.unrealized_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(row.unrealized_pnl|float) }}
+            </td>
+            <td>{% if row.unrealized_pct is not none %}{{ "%.2f"|format(row.unrealized_pct|float) }}%{% else %}-{% endif %}</td>
+            <td>${{ "%.2f"|format(row.realized_cost_basis|float) }}</td>
+            <td class="{{ 'positive' if row.realized_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(row.realized_pnl|float) }}
+            </td>
+            <td>{% if row.realized_pct is not none %}{{ "%.2f"|format(row.realized_pct|float) }}%{% else %}-{% endif %}</td>
+            <td>${{ "%.2f"|format(row.total_basis|float) }}</td>
+            <td class="{{ 'positive' if row.total_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(row.total_pnl|float) }}
+            </td>
+            <td>{% if row.total_pct is not none %}{{ "%.2f"|format(row.total_pct|float) }}%{% else %}-{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="11">No account-level P&amp;L yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-head">
+      <h3>P&amp;L By Account And Asset Class</h3>
+      <a href="/positions">Manage marks and closes</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Asset Class</th>
+            <th>Open Cost Basis</th>
+            <th>Market Value</th>
+            <th>Unrealized P&amp;L</th>
+            <th>Unrealized %</th>
+            <th>Realized Cost Basis</th>
+            <th>Realized P&amp;L</th>
+            <th>Realized %</th>
+            <th>Total Basis</th>
+            <th>Total P&amp;L</th>
+            <th>Total %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in portfolio_summary.performance_by_account_asset_class %}
+          <tr>
+            <td>{{ row.account_name }}</td>
+            <td>{{ row.asset_class }}</td>
+            <td>${{ "%.2f"|format(row.open_cost_basis|float) }}</td>
+            <td>${{ "%.2f"|format(row.market_value|float) }}</td>
+            <td class="{{ 'positive' if row.unrealized_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(row.unrealized_pnl|float) }}
+            </td>
+            <td>{% if row.unrealized_pct is not none %}{{ "%.2f"|format(row.unrealized_pct|float) }}%{% else %}-{% endif %}</td>
+            <td>${{ "%.2f"|format(row.realized_cost_basis|float) }}</td>
+            <td class="{{ 'positive' if row.realized_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(row.realized_pnl|float) }}
+            </td>
+            <td>{% if row.realized_pct is not none %}{{ "%.2f"|format(row.realized_pct|float) }}%{% else %}-{% endif %}</td>
+            <td>${{ "%.2f"|format(row.total_basis|float) }}</td>
+            <td class="{{ 'positive' if row.total_pnl|float >= 0 else 'negative' }}">
+              ${{ "%.2f"|format(row.total_pnl|float) }}
+            </td>
+            <td>{% if row.total_pct is not none %}{{ "%.2f"|format(row.total_pct|float) }}%{% else %}-{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="12">No account and asset-class P&amp;L yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <section class="content-grid">
+    <article class="card">
+      <div class="section-head">
+        <h3>Recent Trades</h3>
+        <a href="/trades">See all</a>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Symbol</th>
+              <th>Side</th>
+              <th>Qty</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for trade in recent_trades %}
+            <tr>
+              <td>{{ trade.trade_date }}</td>
+              <td>{{ trade.account.name }}</td>
+              <td>{{ trade.instrument.symbol }}</td>
+              <td>{{ trade.side.value }}</td>
+              <td>{{ trade.quantity }}</td>
+              <td>{{ trade.reason }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6">No trades yet. Start by adding your first manual trade.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-head">
+        <h3>Closed Positions</h3>
+        <a href="/positions/closed">See all</a>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Symbol</th>
+              <th>Closed On</th>
+              <th>Realized P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for position in closed_positions[:5] %}
+            <tr>
+              <td>{{ position.account_name }}</td>
+              <td>{{ position.symbol }}</td>
+              <td>{{ position.closed_on }}</td>
+              <td class="{{ 'positive' if position.realized_pnl_total|float >= 0 else 'negative' }}">
+                ${{ "%.2f"|format(position.realized_pnl_total|float) }}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">No closed positions yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</section>
+{% endblock %}
