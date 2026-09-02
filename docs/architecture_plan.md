@@ -1,22 +1,26 @@
 # Trading Journal MCP Architecture Plan
 
-## 1. Step 2 Architecture Outcome
+## 1. Step 2 And Step 3 Architecture Outcome
 
 Step 2 adds architecture around the accepted prototype without restarting the project. The current working behavior remains in place, but the code now has clearer boundaries for future MCP servers, external providers, services, audit logging, broker sync, news, and order workflows.
 
+Step 3 starts moving code gradually into those boundaries. The first migration moves FastAPI route logic out of `app/main.py` and into dedicated route modules while preserving every existing URL, API endpoint, and MCP endpoint.
+
 The key design decision is to keep the application modular:
 
-- FastAPI owns web routes and HTML/API responses.
+- FastAPI app assembly lives in `app/main.py`.
+- Web routes and JSON API routes live in `app/routes/`.
 - Services own business workflows.
 - Providers own external API/broker integration boundaries.
 - MCP servers expose domain capabilities to internal and external clients.
-- The CLI remains an external MCP client for demonstrations.
+- The browser MCP Console and CLI remain separate MCP client demonstrations.
 
 ## 2. Current Expanded MCP Topology
 
 ```mermaid
 flowchart LR
     UI["FastAPI Web UI"] --> HOST["Internal MCP Client Host"]
+    CONSOLE["Browser MCP Console"] --> HOST
     CLI["CLI MCP Demo Client"] --> PMCP["Portfolio MCP"]
     CLI --> MMCP["Market Data MCP"]
     CLI --> NMCP["News MCP"]
@@ -125,6 +129,25 @@ Current files:
 
 - `app/audit/events.py`
 
+### 3.5 Route Package
+
+New package:
+
+- `app/routes/`
+
+Purpose:
+
+- Keep HTTP route definitions separate from application startup.
+- Preserve existing URLs while making route groups easier to test and extend.
+- Let future audit middleware, authentication, and API versioning be added without crowding `app/main.py`.
+
+Current files:
+
+- `app/routes/web.py`
+- `app/routes/api.py`
+
+`app/main.py` now focuses on app construction, template/static setup, router inclusion, database startup, and MCP server mounting.
+
 ## 4. Active MCP Endpoints
 
 The app now mounts these MCP endpoints:
@@ -164,6 +187,7 @@ flowchart TD
     B --> E["User or CLI discovers MCP servers"]
     E --> F["Portfolio and Market Data MCP expose current prototype behavior"]
     E --> G["News/Broker/Trading MCP expose safe scaffolding"]
+    E --> I["Browser MCP Console can discover and call MCP capabilities"]
     G --> H["Future phases fill in real provider implementations"]
 ```
 
@@ -270,5 +294,5 @@ python3 -m pytest
 Current passing baseline:
 
 ```text
-9 passed
+10 passed
 ```

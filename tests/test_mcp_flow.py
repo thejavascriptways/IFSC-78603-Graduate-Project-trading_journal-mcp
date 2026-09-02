@@ -270,3 +270,19 @@ def test_future_domain_mcp_servers_are_discoverable_and_safe(app_instance):
                         assert preview_payload["side"] == "BUY"
 
         asyncio.run(scenario())
+
+
+def test_browser_mcp_console_page_and_catalog_api_work(app_instance):
+    with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
+        page_response = client.get("/mcp-console")
+        assert page_response.status_code == 200
+        assert "MCP Console" in page_response.text
+        assert "Browser MCP Client" in page_response.text
+
+        catalog_response = client.get("/api/mcp-console/catalog", params={"server_id": "trading"})
+        assert catalog_response.status_code == 200
+        payload = catalog_response.json()
+        assert payload["server"]["id"] == "trading"
+        assert {tool["name"] for tool in payload["tools"]}.issuperset(
+            {"get_trading_capabilities", "preview_order"}
+        )

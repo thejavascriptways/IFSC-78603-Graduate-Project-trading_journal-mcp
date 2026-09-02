@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card accent">
+  <p class="eyebrow">Browser MCP Client</p>
+  <div class="section-head">
+    <div>
+      <h2>MCP Console</h2>
+      <p class="helper-copy">
+        This page acts as a lightweight client inside the Trading Journal app. It discovers MCP servers,
+        lists their tools/resources/prompts, and sends tool calls through the app's internal MCP client host.
+      </p>
+    </div>
+    <button id="discover-button" class="primary-button" type="button">Discover Selected Server</button>
+  </div>
+</section>
+
+{% if error %}
+  <div class="error-banner">{{ error }}</div>
+{% endif %}
+{% if notice %}
+  <div class="notice-banner">{{ notice }}</div>
+{% endif %}
+
+<section class="content-grid console-grid">
+  <div class="card">
+    <p class="eyebrow">Server Discovery</p>
+    <label class="field-label" for="server-id">MCP Server</label>
+    <select id="server-id" class="console-control">
+      {% for server in servers %}
+        <option value="{{ server.id }}" {% if server.id == selected_server_id %}selected{% endif %}>
+          {{ server.name }} - {{ server.description }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <div class="console-columns">
+      <div>
+        <h3>Tools</h3>
+        <ul id="tool-list" class="plain-list"></ul>
+      </div>
+      <div>
+        <h3>Resources</h3>
+        <ul id="resource-list" class="plain-list"></ul>
+      </div>
+      <div>
+        <h3>Prompts</h3>
+        <ul id="prompt-list" class="plain-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="eyebrow">MCP Operation</p>
+    <div class="console-form">
+      <label class="field-label" for="tool-name">Tool Name</label>
+      <input id="tool-name" class="console-control" value="get_portfolio_summary" />
+
+      <label class="field-label" for="tool-arguments">Tool Arguments JSON</label>
+      <textarea id="tool-arguments" class="console-control" rows="5">{}</textarea>
+      <button id="call-tool-button" class="primary-button" type="button">Call Tool</button>
+
+      <label class="field-label" for="resource-uri">Resource URI</label>
+      <input id="resource-uri" class="console-control" value="portfolio://summary" />
+      <button id="read-resource-button" class="secondary-button" type="button">Read Resource</button>
+
+      <label class="field-label" for="prompt-name">Prompt Name</label>
+      <input id="prompt-name" class="console-control" value="daily_portfolio_review" />
+
+      <label class="field-label" for="prompt-arguments">Prompt Arguments JSON</label>
+      <textarea id="prompt-arguments" class="console-control" rows="4">{"focus":"risk"}</textarea>
+      <button id="get-prompt-button" class="secondary-button" type="button">Get Prompt</button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <p class="eyebrow">MCP Response</p>
+  <pre id="console-output" class="console-output">Click "Discover Selected Server" to begin.</pre>
+</section>
+
+<script>
+  const serverSelect = document.querySelector("#server-id");
+  const output = document.querySelector("#console-output");
+  const toolList = document.querySelector("#tool-list");
+  const resourceList = document.querySelector("#resource-list");
+  const promptList = document.querySelector("#prompt-list");
+
+  const defaultExamples = {
+    trading_journal: {
+      tool: "get_portfolio_summary",
+      toolArguments: "{}",
+      resource: "portfolio://summary",
+      prompt: "daily_portfolio_review",
+      promptArguments: "{\"focus\":\"risk\"}",
+    },
+    market_data: {
+      tool: "get_market_data_capabilities",
+      toolArguments: "{}",
+      resource: "market-data://capabilities",
+      prompt: "market_data_health_check",
+      promptArguments: "{\"symbols\":\"AAPL,MSFT\"}",
+    },
+    news: {
+      tool: "get_news_capabilities",
+      toolArguments: "{}",
+      resource: "news://capabilities",
+      prompt: "portfolio_news_review",
+      promptArguments: "{\"symbols\":\"AAPL,MSFT\"}",
+    },
+    broker: {
+      tool: "get_broker_status",
+      toolArguments: "{}",
+      resource: "broker://status",
+      prompt: "broker_sync_readiness",
+      promptArguments: "{}",
+    },
+    trading: {
+      tool: "get_trading_capabilities",
+      toolArguments: "{}",
+      resource: "trading://capabilities",
+      prompt: "order_safety_review",
+      promptArguments: "{\"symbol\":\"AAPL\"}",
+    },
+  };
+
+  function showResult(payload) {
+    output.textContent = JSON.stringify(payload, null, 2);
+  }
+
+  function showError(error) {
+    output.textContent = `Error: ${error.message}`;
+  }
+
+  function parseJsonField(id) {
+    const raw = document.querySelector(id).value.trim();
+    return raw ? JSON.parse(raw) : {};
+  }
+
+  function renderList(element, items, formatter) {
+    element.innerHTML = "";
+    for (const item of items) {
+      const li = document.createElement("li");
+      li.textContent = formatter(item);
+      element.appendChild(li);
+    }
+  }
+
+  function applyServerExample() {
+    const example = defaultExamples[serverSelect.value];
+    if (!example) return;
+    document.querySelector("#tool-name").value = example.tool;
+    document.querySelector("#tool-arguments").value = example.toolArguments;
+    document.querySelector("#resource-uri").value = example.resource;
+    document.querySelector("#prompt-name").value = example.prompt;
+    document.querySelector("#prompt-arguments").value = example.promptArguments;
+  }
+
+  async function postJson(url, payload) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || "MCP request failed.");
+    return data;
+  }
+
+  async function discoverSelectedServer() {
+    try {
+      const response = await fetch(`/api/mcp-console/catalog?server_id=${encodeURIComponent(serverSelect.value)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "MCP discovery failed.");
+      renderList(toolList, data.tools || [], item => `${item.name}: ${item.description || "No description"}`);
+      renderList(resourceList, data.resources || [], item => `${item.uri}: ${item.description || "No description"}`);
+      renderList(promptList, data.prompts || [], item => `${item.name}: ${item.description || "No description"}`);
+      showResult(data);
+    } catch (error) {
+      showError(error);
+    }
+  }
+
+  document.querySelector("#discover-button").addEventListener("click", discoverSelectedServer);
+  document.querySelector("#call-tool-button").addEventListener("click", async () => {
+    try {
+      showResult(await postJson("/api/mcp-console/call-tool", {
+        server_id: serverSelect.value,
+        tool_name: document.querySelector("#tool-name").value.trim(),
+        arguments: parseJsonField("#tool-arguments"),
+      }));
+    } catch (error) {
+      showError(error);
+    }
+  });
+  document.querySelector("#read-resource-button").addEventListener("click", async () => {
+    try {
+      showResult(await postJson("/api/mcp-console/read-resource", {
+        server_id: serverSelect.value,
+        uri: document.querySelector("#resource-uri").value.trim(),
+      }));
+    } catch (error) {
+      showError(error);
+    }
+  });
+  document.querySelector("#get-prompt-button").addEventListener("click", async () => {
+    try {
+      showResult(await postJson("/api/mcp-console/get-prompt", {
+        server_id: serverSelect.value,
+        prompt_name: document.querySelector("#prompt-name").value.trim(),
+        arguments: parseJsonField("#prompt-arguments"),
+      }));
+    } catch (error) {
+      showError(error);
+    }
+  });
+  serverSelect.addEventListener("change", () => {
+    applyServerExample();
+    discoverSelectedServer();
+  });
+
+  applyServerExample();
+  discoverSelectedServer();
+</script>
+{% endblock %}

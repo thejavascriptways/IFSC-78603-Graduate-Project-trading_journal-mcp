@@ -75,7 +75,7 @@ Acceptance criteria:
 
 Goal: create the real application foundation without changing user-facing workflows too much.
 
-Current Step 2 progress is documented in `docs/architecture_plan.md`.
+Current Step 2 and Step 3 progress is documented in `docs/architecture_plan.md`.
 
 Deliverables:
 
@@ -104,6 +104,7 @@ Recommended module structure:
 Implementation tasks:
 
 - Refactor existing large modules only where needed.
+- Move route groups from `app/main.py` into `app/routes/` gradually while preserving all current URLs.
 - Add models for `BrokerConnection`, `OrderTicket`, `OrderEvent`, `NewsArticle`, `MarketQuoteSnapshot`, `JournalEntry`, `PositionReview`, `BrokerSyncRun`, `UserActionLog`, `MCPRequestLog`, `ExternalAPICallLog`, and `ApplicationEventLog`.
 - Add enums for order status, order type, time in force, provider status, event type, and client type.
 - Add a database migration approach. For local development, this can initially be a safe schema creation/upgrade helper, but Alembic is recommended before deployment.

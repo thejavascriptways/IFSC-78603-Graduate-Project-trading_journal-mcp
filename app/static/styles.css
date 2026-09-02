@@ -261,6 +261,51 @@ th {
   padding: 0.55rem 0.85rem;
 }
 
+.console-grid {
+  margin: 1.5rem 0;
+}
+
+.console-columns {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 1.25rem;
+}
+
+.console-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.console-control {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  font: inherit;
+  background: #fff;
+}
+
+.console-output {
+  overflow-x: auto;
+  margin: 0;
+  border-radius: 18px;
+  padding: 1rem;
+  background: #151a18;
+  color: #dff2ee;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .positive {
   color: #10704d;
 }

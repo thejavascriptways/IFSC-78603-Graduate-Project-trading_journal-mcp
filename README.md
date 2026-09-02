@@ -68,7 +68,7 @@ flowchart LR
 ```text
 .
 ├── app/
-│   ├── main.py                 # FastAPI app, routes, mounted MCP servers
+│   ├── main.py                 # FastAPI app factory, routers, mounted MCP servers
 │   ├── config.py               # Environment-based settings
 │   ├── db.py                   # SQLAlchemy database setup
 │   ├── mcp_server.py           # Trading Journal MCP server
@@ -77,6 +77,7 @@ flowchart LR
 │   ├── models/                 # SQLAlchemy entities and enums
 │   ├── mcp_servers/            # Domain-specific MCP server factories
 │   ├── providers/              # External provider adapter interfaces
+│   ├── routes/                 # Web and JSON API route modules
 │   ├── services/               # Portfolio, market data, and MCP host logic
 │   ├── static/                 # CSS
 │   └── templates/              # Jinja2 HTML templates
@@ -188,7 +189,8 @@ uvicorn app.main:app
 5. Use **Positions** to review open holdings, update mark prices, refresh market data, or close positions.
 6. Use **Closed Positions** to review realized P&L after a position is fully closed.
 7. Use **Market Data** to view quote data and provider status for portfolio symbols.
-8. Use the MCP demo client to show how external clients discover and call MCP capabilities.
+8. Use **MCP Console** to discover MCP servers, call tools, read resources, and render prompts from the browser.
+9. Use the MCP demo client to show how external clients discover and call MCP capabilities.
 
 ## MCP Endpoints
 
@@ -387,7 +389,7 @@ python3 -m pytest
 Current baseline result at prototype freeze:
 
 ```text
-9 passed
+10 passed
 ```
 
 The tests cover:
@@ -403,6 +405,7 @@ The tests cover:
 - Market Data MCP discovery and capability calls.
 - News, Broker, and Trading MCP scaffold discovery.
 - Trading MCP live-trading-disabled safety signal.
+- Browser MCP Console route and catalog API.
 
 ## Important Safety Notes
 

@@ -156,6 +156,7 @@ Current internal MCP client behavior:
 
 - The FastAPI app calls the Market Data MCP server over Streamable HTTP using the MCP Python client.
 - This happens when refreshing market-data marks for open positions.
+- The `/mcp-console` page now acts as a browser-side lightweight client that calls the internal MCP client host APIs.
 
 Current external MCP client behavior:
 
