@@ -75,6 +75,8 @@ Acceptance criteria:
 
 Goal: create the real application foundation without changing user-facing workflows too much.
 
+Current Step 2 progress is documented in `docs/architecture_plan.md`.
+
 Deliverables:
 
 - Clear folder structure for services, providers, MCP servers, and schemas.

@@ -37,6 +37,24 @@ REGISTERED_MCP_SERVERS: tuple[MCPServerConfig, ...] = (
         url="http://127.0.0.1:8000/market-data-mcp/",
         description="Live market-data tools and provider capability resources.",
     ),
+    MCPServerConfig(
+        id="news",
+        name="News MCP",
+        url="http://127.0.0.1:8000/news-mcp/",
+        description="Stock-news tools, resources, and review prompts.",
+    ),
+    MCPServerConfig(
+        id="broker",
+        name="Broker MCP",
+        url="http://127.0.0.1:8000/broker-mcp/",
+        description="Safe broker connectivity scaffolding for future IBKR sync.",
+    ),
+    MCPServerConfig(
+        id="trading",
+        name="Trading MCP",
+        url="http://127.0.0.1:8000/trading-mcp/",
+        description="Safe order-preview scaffolding; live trading is disabled.",
+    ),
 )
 
 

@@ -12,6 +12,7 @@ The application has two equally important goals:
 This document is the working requirements baseline for the real application. The prototype features remain useful, but future work should be designed from this document instead of simply extending screens opportunistically.
 
 The public demo and future deployment requirements are tracked separately in `docs/deployment_plan.md`.
+The current architecture hardening notes are tracked in `docs/architecture_plan.md`.
 
 ## 2. Product Vision
 

@@ -144,6 +144,14 @@ Current MCP servers:
 - Trading Journal MCP mounted at `/mcp/`.
 - Market Data MCP mounted at `/market-data-mcp/`.
 
+After Step 2 architecture scaffolding, the app also mounts safe placeholder MCP domains for future work:
+
+- News MCP mounted at `/news-mcp/`.
+- Broker MCP mounted at `/broker-mcp/`.
+- Trading MCP mounted at `/trading-mcp/`.
+
+These additional servers are discoverable architecture scaffolding. They do not add real broker sync or live trading yet.
+
 Current internal MCP client behavior:
 
 - The FastAPI app calls the Market Data MCP server over Streamable HTTP using the MCP Python client.
@@ -249,8 +257,8 @@ The prototype does not yet include:
 - User action logs.
 - MCP request logs.
 - External API call logs.
-- News MCP server.
-- Broker MCP server.
+- Production news provider integration.
+- Real broker provider integration.
 - IBKR account sync.
 - Order staging.
 - Paper trading.

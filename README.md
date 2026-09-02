@@ -30,6 +30,7 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 - Alpaca-backed market-data integration for supported stocks, ETFs, and options.
 - Trading Journal MCP server.
 - Market Data MCP server.
+- Safe News MCP, Broker MCP, and Trading MCP scaffolding for future phases.
 - Internal MCP client calls from the web app to the Market Data MCP server.
 - External command-line MCP demo client.
 - Planning documents for requirements, implementation, deployment, and prototype baseline.
@@ -45,12 +46,21 @@ flowchart LR
 
     HOST --> PMCP["Trading Journal MCP Server"]
     HOST --> MMCP["Market Data MCP Server"]
+    HOST --> NMCP["News MCP Server"]
+    HOST --> BMCP["Broker MCP Server"]
+    HOST --> TMCP["Trading MCP Server"]
 
     PMCP --> DB
     MMCP --> ALPACA["Alpaca Market Data API"]
+    NMCP --> DEMO["Demo News Provider"]
+    BMCP --> IBKR["IBKR Placeholder"]
+    TMCP --> SAFE["Preview-Only Safety Gate"]
 
     CLI["External MCP Demo Client"] --> PMCP
     CLI --> MMCP
+    CLI --> NMCP
+    CLI --> BMCP
+    CLI --> TMCP
 ```
 
 ## Repository Structure
@@ -63,12 +73,16 @@ flowchart LR
 │   ├── db.py                   # SQLAlchemy database setup
 │   ├── mcp_server.py           # Trading Journal MCP server
 │   ├── market_data_mcp.py      # Market Data MCP server
+│   ├── audit/                  # Audit event scaffolding
 │   ├── models/                 # SQLAlchemy entities and enums
+│   ├── mcp_servers/            # Domain-specific MCP server factories
+│   ├── providers/              # External provider adapter interfaces
 │   ├── services/               # Portfolio, market data, and MCP host logic
 │   ├── static/                 # CSS
 │   └── templates/              # Jinja2 HTML templates
 ├── docs/
 │   ├── application_requirements.md
+│   ├── architecture_plan.md
 │   ├── deployment_plan.md
 │   ├── implementation_plan.md
 │   ├── prototype_baseline.md
@@ -178,11 +192,14 @@ uvicorn app.main:app
 
 ## MCP Endpoints
 
-The app currently mounts two MCP servers:
+The app currently mounts five MCP servers:
 
 ```text
 Trading Journal MCP: http://127.0.0.1:8000/mcp/
 Market Data MCP:     http://127.0.0.1:8000/market-data-mcp/
+News MCP:            http://127.0.0.1:8000/news-mcp/
+Broker MCP:          http://127.0.0.1:8000/broker-mcp/
+Trading MCP:         http://127.0.0.1:8000/trading-mcp/
 ```
 
 ### Trading Journal MCP Server
@@ -221,6 +238,58 @@ Current resources:
 Current prompts:
 
 - `market_data_health_check`
+
+### News MCP Server
+
+Current tools:
+
+- `get_news_capabilities`
+- `get_symbol_news`
+- `get_portfolio_news`
+
+Current resources:
+
+- `news://capabilities`
+
+Current prompts:
+
+- `portfolio_news_review`
+
+This server currently uses deterministic demo news data so the architecture can be demonstrated before a real news provider is selected.
+
+### Broker MCP Server
+
+Current tools:
+
+- `get_broker_status`
+- `list_broker_accounts`
+
+Current resources:
+
+- `broker://status`
+
+Current prompts:
+
+- `broker_sync_readiness`
+
+This server is safe scaffolding for future IBKR sync. It does not connect to IBKR or place trades yet.
+
+### Trading MCP Server
+
+Current tools:
+
+- `get_trading_capabilities`
+- `preview_order`
+
+Current resources:
+
+- `trading://capabilities`
+
+Current prompts:
+
+- `order_safety_review`
+
+This server only supports preview scaffolding. Live trading is disabled.
 
 ## Demonstrate MCP From The Command Line
 
@@ -271,6 +340,15 @@ python3 scripts/mcp_demo_client.py --server market resources
 python3 scripts/mcp_demo_client.py --server market prompts
 ```
 
+Discover the future domain MCP scaffolds:
+
+```bash
+python3 scripts/mcp_demo_client.py --server news discover
+python3 scripts/mcp_demo_client.py --server broker discover
+python3 scripts/mcp_demo_client.py --server trading discover
+python3 scripts/mcp_demo_client.py --server trading call get_trading_capabilities
+```
+
 Call market-data tools:
 
 ```bash
@@ -309,7 +387,7 @@ python3 -m pytest
 Current baseline result at prototype freeze:
 
 ```text
-8 passed
+9 passed
 ```
 
 The tests cover:
@@ -323,6 +401,8 @@ The tests cover:
 - Dashboard P&L summaries.
 - Trading Journal MCP discovery and tool calls.
 - Market Data MCP discovery and capability calls.
+- News, Broker, and Trading MCP scaffold discovery.
+- Trading MCP live-trading-disabled safety signal.
 
 ## Important Safety Notes
 
@@ -342,6 +422,7 @@ The project roadmap is documented in:
 - [Accepted Revised Final Proposal - PDF](docs/proposal/Trading_Journal_MCP_Proposal_Revised.pdf)
 - [Accepted Revised Final Proposal - Word](docs/proposal/Trading_Journal_MCP_Proposal_Revised.docx)
 - [Application Requirements](docs/application_requirements.md)
+- [Architecture Plan](docs/architecture_plan.md)
 - [Implementation Plan](docs/implementation_plan.md)
 - [Deployment Plan](docs/deployment_plan.md)
 - [Prototype Baseline](docs/prototype_baseline.md)

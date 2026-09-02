@@ -193,3 +193,80 @@ def test_market_data_mcp_server_exposes_live_tools_and_capabilities(app_instance
                         assert capabilities_from_resource["provider"] == "alpaca"
 
         asyncio.run(scenario())
+
+
+def test_future_domain_mcp_servers_are_discoverable_and_safe(app_instance):
+    with TestClient(app_instance, base_url="http://127.0.0.1:8000"):
+
+        async def scenario():
+            transport = httpx.ASGITransport(app=app_instance)
+            async with httpx.AsyncClient(
+                transport=transport,
+                base_url="http://127.0.0.1:8000",
+                follow_redirects=True,
+            ) as http_client:
+                server_expectations = {
+                    "/news-mcp/": {
+                        "tools": {"get_news_capabilities", "get_symbol_news", "get_portfolio_news"},
+                        "resource": "news://capabilities",
+                        "capability_tool": "get_news_capabilities",
+                    },
+                    "/broker-mcp/": {
+                        "tools": {"get_broker_status", "list_broker_accounts"},
+                        "resource": "broker://status",
+                        "capability_tool": "get_broker_status",
+                    },
+                    "/trading-mcp/": {
+                        "tools": {"get_trading_capabilities", "preview_order"},
+                        "resource": "trading://capabilities",
+                        "capability_tool": "get_trading_capabilities",
+                    },
+                }
+
+                for path, expectation in server_expectations.items():
+                    async with streamable_http_client(
+                        f"http://127.0.0.1:8000{path}",
+                        http_client=http_client,
+                    ) as (read, write, _):
+                        async with ClientSession(read, write) as session:
+                            await session.initialize()
+
+                            tools = await session.list_tools()
+                            tool_names = {tool.name for tool in tools.tools}
+                            assert expectation["tools"].issubset(tool_names)
+
+                            resources = await session.list_resources()
+                            resource_uris = {str(resource.uri) for resource in resources.resources}
+                            assert expectation["resource"] in resource_uris
+
+                            capabilities = await session.call_tool(expectation["capability_tool"])
+                            payload = capabilities.model_dump(mode="json")
+                            assert payload["structuredContent"]
+
+                async with streamable_http_client(
+                    "http://127.0.0.1:8000/trading-mcp/",
+                    http_client=http_client,
+                ) as (read, write, _):
+                    async with ClientSession(read, write) as session:
+                        await session.initialize()
+                        capabilities = await session.call_tool("get_trading_capabilities")
+                        payload = capabilities.model_dump(mode="json")["structuredContent"]
+                        assert payload["live_trading_enabled"] is False
+
+                        preview = await session.call_tool(
+                            "preview_order",
+                            {
+                                "account_id": 1,
+                                "symbol": "AAPL",
+                                "side": "BUY",
+                                "quantity": "1",
+                                "order_type": "MARKET",
+                                "reason": "Architecture safety preview.",
+                            },
+                        )
+                        preview_payload = preview.model_dump(mode="json")["structuredContent"]
+                        assert preview_payload["status"] == "preview_only"
+                        assert preview_payload["symbol"] == "AAPL"
+                        assert preview_payload["side"] == "BUY"
+
+        asyncio.run(scenario())

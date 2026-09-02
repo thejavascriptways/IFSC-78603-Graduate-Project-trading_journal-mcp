@@ -28,9 +28,9 @@ Local endpoints:
 - Web UI: `http://127.0.0.1:8000/`
 - Portfolio MCP endpoint: `http://127.0.0.1:8000/mcp/`
 - Market Data MCP endpoint: `http://127.0.0.1:8000/market-data-mcp/`
-- Future News MCP endpoint: `http://127.0.0.1:8000/news-mcp/`
-- Future Broker MCP endpoint: `http://127.0.0.1:8000/broker-mcp/`
-- Future Trading MCP endpoint: `http://127.0.0.1:8000/trading-mcp/`
+- News MCP endpoint: `http://127.0.0.1:8000/news-mcp/`
+- Broker MCP endpoint: `http://127.0.0.1:8000/broker-mcp/`
+- Trading MCP endpoint: `http://127.0.0.1:8000/trading-mcp/`
 
 Benefits:
 
@@ -69,9 +69,9 @@ Public demo endpoints:
 - Web UI: `https://demo-domain.example/`
 - Portfolio MCP endpoint: `https://demo-domain.example/mcp/`
 - Market Data MCP endpoint: `https://demo-domain.example/market-data-mcp/`
-- Future News MCP endpoint: `https://demo-domain.example/news-mcp/`
-- Future Broker MCP endpoint: `https://demo-domain.example/broker-mcp/`
-- Future Trading MCP endpoint: `https://demo-domain.example/trading-mcp/`
+- News MCP endpoint: `https://demo-domain.example/news-mcp/`
+- Broker MCP endpoint: `https://demo-domain.example/broker-mcp/`
+- Trading MCP endpoint: `https://demo-domain.example/trading-mcp/`
 
 Benefits:
 
@@ -102,9 +102,9 @@ The deployed app should expose:
 - Web UI: `https://demo-domain.example/`
 - Portfolio MCP endpoint: `https://demo-domain.example/mcp/`
 - Market Data MCP endpoint: `https://demo-domain.example/market-data-mcp/`
-- Future News MCP endpoint: `https://demo-domain.example/news-mcp/`
-- Future Broker MCP endpoint: `https://demo-domain.example/broker-mcp/`
-- Future Trading MCP endpoint: `https://demo-domain.example/trading-mcp/`
+- News MCP endpoint: `https://demo-domain.example/news-mcp/`
+- Broker MCP endpoint: `https://demo-domain.example/broker-mcp/`
+- Trading MCP endpoint: `https://demo-domain.example/trading-mcp/`
 
 The MCP remote server requirement is important: a remote MCP server must be publicly reachable at its configured URL. Streamable HTTP is the recommended remote transport path.
 

@@ -39,6 +39,24 @@ def build_server_registry(base_url: str) -> dict[str, MCPServerTarget]:
             url=f"{normalized_base_url}/market-data-mcp/",
             purpose="External market-data capabilities, equity snapshots, option snapshots, and quote prompts.",
         ),
+        "news": MCPServerTarget(
+            id="news",
+            name="News MCP",
+            url=f"{normalized_base_url}/news-mcp/",
+            purpose="Stock-news capabilities, symbol news, portfolio news, and review prompts.",
+        ),
+        "broker": MCPServerTarget(
+            id="broker",
+            name="Broker MCP",
+            url=f"{normalized_base_url}/broker-mcp/",
+            purpose="Safe broker connectivity scaffolding for future IBKR account and execution sync.",
+        ),
+        "trading": MCPServerTarget(
+            id="trading",
+            name="Trading MCP",
+            url=f"{normalized_base_url}/trading-mcp/",
+            purpose="Safe order-preview scaffolding; live trading is disabled.",
+        ),
     }
 
 
@@ -56,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--server",
-        choices=["journal", "market"],
+        choices=["journal", "market", "news", "broker", "trading"],
         default="journal",
         help="Named MCP server to use for single-server commands.",
     )
@@ -201,7 +219,7 @@ def explain_mcp_client() -> None:
     print("2. Tools: the client calls actions such as list_positions or get_equity_snapshots.")
     print("3. Resources: the client reads data snapshots such as portfolio://summary.")
     print("4. Prompts: the client asks the server for reusable prompt text built from app data.")
-    print("5. Multi-server flow: one client can talk to both the portfolio MCP server and the market-data MCP server.")
+    print("5. Multi-server flow: one client can talk to portfolio, market-data, news, broker, and trading MCP servers.")
 
 
 async def connect_and_run(target: MCPServerTarget, operation: Any) -> Any:
@@ -462,6 +480,9 @@ async def run_client_demo(registry: dict[str, MCPServerTarget], *, raw: bool) ->
     explain_mcp_client()
     await run_portfolio_review(registry["journal"], "overall", raw=raw)
     await run_market_check(registry["market"], "AAPL,MSFT", raw=raw)
+    for server_id in ("news", "broker", "trading"):
+        print_section(f"MCP Client Workflow: Discover {registry[server_id].name}")
+        dump_json(await discover(registry[server_id]))
 
 
 async def run_client(args: argparse.Namespace) -> None:
