@@ -33,6 +33,7 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 - Safe News MCP, Broker MCP, and Trading MCP scaffolding for future phases.
 - Internal MCP client calls from the web app to the Market Data MCP server.
 - External command-line MCP demo client.
+- Persistent audit logging foundation with correlation IDs, redaction, and an audit viewer.
 - Planning documents for requirements, implementation, deployment, and prototype baseline.
 
 ## Current Architecture
@@ -43,6 +44,7 @@ flowchart LR
     UI --> SVC["Application Services"]
     SVC --> DB["SQLite Database"]
     UI --> HOST["Internal MCP Client"]
+    UI --> AUDIT["Audit Logs"]
 
     HOST --> PMCP["Trading Journal MCP Server"]
     HOST --> MMCP["Market Data MCP Server"]
@@ -55,6 +57,8 @@ flowchart LR
     NMCP --> DEMO["Demo News Provider"]
     BMCP --> IBKR["IBKR Placeholder"]
     TMCP --> SAFE["Preview-Only Safety Gate"]
+    HOST --> AUDIT
+    ALPACA --> AUDIT
 
     CLI["External MCP Demo Client"] --> PMCP
     CLI --> MMCP
@@ -73,7 +77,7 @@ flowchart LR
 │   ├── db.py                   # SQLAlchemy database setup
 │   ├── mcp_server.py           # Trading Journal MCP server
 │   ├── market_data_mcp.py      # Market Data MCP server
-│   ├── audit/                  # Audit event scaffolding
+│   ├── audit/                  # Audit logging, middleware, redaction, correlation IDs
 │   ├── models/                 # SQLAlchemy entities and enums
 │   ├── mcp_servers/            # Domain-specific MCP server factories
 │   ├── providers/              # External provider adapter interfaces
@@ -190,7 +194,8 @@ uvicorn app.main:app
 6. Use **Closed Positions** to review realized P&L after a position is fully closed.
 7. Use **Market Data** to view quote data and provider status for portfolio symbols.
 8. Use **MCP Console** to discover MCP servers, call tools, read resources, and render prompts from the browser.
-9. Use the MCP demo client to show how external clients discover and call MCP capabilities.
+9. Use **Audit** to inspect recent web/API actions, MCP requests, external API calls, and application events.
+10. Use the MCP demo client to show how external clients discover and call MCP capabilities.
 
 ## MCP Endpoints
 
@@ -203,6 +208,24 @@ News MCP:            http://127.0.0.1:8000/news-mcp/
 Broker MCP:          http://127.0.0.1:8000/broker-mcp/
 Trading MCP:         http://127.0.0.1:8000/trading-mcp/
 ```
+
+## Audit And Observability
+
+The app now creates a correlation ID for each non-static HTTP request and stores initial audit records.
+
+Current audit views:
+
+- Browser page: `http://127.0.0.1:8000/audit`
+- JSON API: `http://127.0.0.1:8000/api/audit/logs`
+
+Current audit tables:
+
+- `user_action_logs`
+- `mcp_request_logs`
+- `external_api_call_logs`
+- `application_event_logs`
+
+Sensitive fields such as API keys, secrets, tokens, cookies, and authorization values are redacted before being stored.
 
 ### Trading Journal MCP Server
 
@@ -389,7 +412,7 @@ python3 -m pytest
 Current baseline result at prototype freeze:
 
 ```text
-10 passed
+13 passed
 ```
 
 The tests cover:
@@ -406,6 +429,7 @@ The tests cover:
 - News, Broker, and Trading MCP scaffold discovery.
 - Trading MCP live-trading-disabled safety signal.
 - Browser MCP Console route and catalog API.
+- Audit correlation IDs, persistent MCP logs, and secret redaction.
 
 ## Important Safety Notes
 
@@ -434,12 +458,12 @@ The project roadmap is documented in:
 
 ## Recommended Next Build Step
 
-The next implementation step is to add the real application foundation:
+The next implementation step is to continue Phase 2 by expanding audit coverage:
 
-1. Expanded data models for audit events, news, broker connections, and order tickets.
-2. Correlation ID middleware.
-3. Full audit logging for user actions, MCP requests, external API calls, and errors.
-4. Audit log viewer screen.
-5. Tests for audit creation and secret redaction.
+1. Add filters on the Audit page by event type, client type, status, and correlation ID.
+2. Add export support for audit logs.
+3. Add deeper domain-level logs for manual trades, position closes, and market-data refreshes.
+4. Add audit links from MCP Console actions to matching audit records.
+5. Add migration tooling before the schema grows much further.
 
 This foundation should be completed before IBKR broker sync, paper trading, or any future live trading workflow.

@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.audit.service import list_recent_audit_logs
 from app.config import settings
 from app.db import get_session
 from app.models.enums import AssetClass, OrderSide
@@ -215,6 +216,14 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
                 notice=notice,
                 selected_server_id=selected_server_id,
             ),
+        )
+
+    @router.get("/audit", response_class=HTMLResponse)
+    def audit_page(request: Request, session: Session = Depends(get_session)):
+        return templates.TemplateResponse(
+            request=request,
+            name="audit.html",
+            context={"audit_logs": list_recent_audit_logs(session, limit=50)},
         )
 
     @router.get("/trades/new", response_class=HTMLResponse)

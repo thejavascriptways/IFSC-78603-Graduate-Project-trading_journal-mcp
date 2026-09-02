@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.audit.service import list_recent_audit_logs
 from app.db import get_session
 from app.schemas import (
     MCPPromptReadRequest,
@@ -67,6 +68,10 @@ def create_api_router() -> APIRouter:
     @router.get("/trades")
     def api_trades(session: Session = Depends(get_session)):
         return [serialize_trade(trade) for trade in list_trades(session)]
+
+    @router.get("/audit/logs")
+    def api_audit_logs(session: Session = Depends(get_session), limit: int = 100):
+        return list_recent_audit_logs(session, limit=min(max(limit, 1), 500))
 
     @router.get("/market-data/live")
     async def api_market_data_live(request: Request, session: Session = Depends(get_session)):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
+from time import perf_counter
 from typing import Any
 
 import httpx
@@ -9,6 +10,9 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from sqlalchemy.orm import Session
 
+from app.audit.context import CORRELATION_ID_HEADER, current_correlation_id
+from app.audit.events import AuditEventStatus
+from app.audit.service import duration_ms_since, log_external_api_call
 from app.config import settings
 from app.models.enums import AssetClass
 from app.services.portfolio import list_closed_positions, list_positions, update_position_market_price
@@ -211,6 +215,7 @@ async def fetch_live_market_data_from_mcp(app: FastAPI, targets: list[dict[str, 
             base_url="http://127.0.0.1:8000",
             follow_redirects=True,
             timeout=settings.market_data_timeout_seconds,
+            headers={CORRELATION_ID_HEADER: current_correlation_id()},
         ) as http_client:
             async with streamable_http_client(
                 "http://127.0.0.1:8000/market-data-mcp/",
@@ -376,17 +381,49 @@ def _alpaca_client() -> httpx.Client:
 
 
 def _request_alpaca(client: httpx.Client, path: str, params: dict[str, Any]) -> httpx.Response:
+    started_at = perf_counter()
     try:
         response = client.get(path, params=params)
         response.raise_for_status()
+        log_external_api_call(
+            provider="alpaca",
+            operation="market_data_request",
+            endpoint=path,
+            status=AuditEventStatus.SUCCESS,
+            status_code=response.status_code,
+            duration_ms=duration_ms_since(started_at),
+            message="Alpaca market data request completed.",
+            request_metadata={"params": params},
+            response_metadata={"status_code": response.status_code},
+        )
         return response
     except httpx.HTTPStatusError as exc:
+        log_external_api_call(
+            provider="alpaca",
+            operation="market_data_request",
+            endpoint=path,
+            status=AuditEventStatus.FAILURE,
+            status_code=exc.response.status_code,
+            duration_ms=duration_ms_since(started_at),
+            message="Alpaca market data request failed with an HTTP status error.",
+            request_metadata={"params": params},
+            response_metadata={"status_code": exc.response.status_code},
+        )
         if exc.response.status_code in {401, 403}:
             raise MarketDataError("Alpaca rejected the market data request. Check your API keys and feed entitlements.") from exc
         if exc.response.status_code == 429:
             raise MarketDataError("Alpaca rate-limited the market data request. Please try again in a moment.") from exc
         raise MarketDataError("Alpaca market data request failed.") from exc
     except httpx.HTTPError as exc:
+        log_external_api_call(
+            provider="alpaca",
+            operation="market_data_request",
+            endpoint=path,
+            status=AuditEventStatus.FAILURE,
+            duration_ms=duration_ms_since(started_at),
+            message="Could not reach Alpaca market data.",
+            request_metadata={"params": params},
+        )
         raise MarketDataError("Could not reach Alpaca market data.") from exc
 
 

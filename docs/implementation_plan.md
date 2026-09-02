@@ -120,6 +120,16 @@ Acceptance criteria:
 
 Goal: log every useful detail happening in the app while protecting secrets.
 
+Current progress:
+
+- Persistent audit tables have been added for user actions, MCP requests, external API calls, and application events.
+- Correlation ID middleware now creates or propagates `X-Correlation-ID`.
+- Web/API/MCP transport requests are logged.
+- Internal MCP Console operations are logged through the MCP host service.
+- Alpaca market-data HTTP calls are logged with redacted metadata.
+- A first audit viewer exists at `/audit`, with JSON access at `/api/audit/logs`.
+- Secret redaction has automated test coverage.
+
 Deliverables:
 
 - Central audit logging service.
@@ -137,14 +147,17 @@ Implementation tasks:
 - Log external API calls for market data, news, and broker providers.
 - Add redaction helpers for API keys, tokens, cookies, account credentials, and sensitive payload fields.
 - Add audit viewer page with filters by event type, client type, symbol, account, status, and correlation ID.
+- Add audit export support.
+- Add audit links from MCP Console actions to matching correlation IDs.
 
 Acceptance criteria:
 
-- A user can open the audit screen and see recent app actions.
-- MCP CLI calls create MCP request logs.
-- External market-data calls create external API logs.
-- Sensitive values are redacted in stored logs.
-- Tests prove redaction works.
+- A user can open the audit screen and see recent app actions. `Completed: initial viewer exists.`
+- MCP CLI calls create MCP request logs. `Partially complete: HTTP transport calls are logged.`
+- External market-data calls create external API logs. `Partially complete: Alpaca calls are logged.`
+- Sensitive values are redacted in stored logs. `Completed for current redaction helper.`
+- Tests prove redaction works. `Completed for current redaction helper.`
+- Audit filters and exports work. `Pending.`
 
 ## 6. Phase 3: Portfolio and Journal Core
 
@@ -514,13 +527,13 @@ Major risks and mitigations:
 
 ## 18. Recommended Immediate Next Step
 
-The next implementation step should be **Phase 1 plus Phase 2 foundation**:
+The next implementation step should continue **Phase 2 audit logging and observability**:
 
-1. Add the audit/event models and logging service.
-2. Add correlation ID middleware.
-3. Add basic audit logging for page views, manual trades, MCP calls, and market-data calls.
-4. Add an audit log viewer page.
-5. Add tests for audit creation and secret redaction.
+1. Add filters to the `/audit` screen for event type, client type, status, and correlation ID.
+2. Add CSV/JSON export for audit logs.
+3. Add deeper domain-specific audit events for manual trades, position closes, market-data refreshes, and MCP Console button actions.
+4. Link MCP Console responses to matching audit correlation IDs.
+5. Add migration tooling before adding the next group of persistent models.
 
 This gives us the foundation needed for every later phase, especially broker sync and trading.
 

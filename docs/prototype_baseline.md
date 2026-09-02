@@ -45,6 +45,7 @@ The prototype exposes these main browser pages:
 - `/positions/closed`: closed positions and realized P&L.
 - `/market-data`: live market-data table for current portfolio symbols.
 - `/mcp-console`: browser-based MCP console route exists in the app routes.
+- `/audit`: browser-based audit log viewer.
 
 ## 5. Current API Endpoints
 
@@ -65,6 +66,7 @@ The prototype exposes these JSON API endpoints:
 - `POST /api/mcp-console/call-tool`
 - `POST /api/mcp-console/read-resource`
 - `POST /api/mcp-console/get-prompt`
+- `GET /api/audit/logs`
 
 ## 6. Current Database Entities
 
@@ -157,6 +159,13 @@ Current internal MCP client behavior:
 - The FastAPI app calls the Market Data MCP server over Streamable HTTP using the MCP Python client.
 - This happens when refreshing market-data marks for open positions.
 - The `/mcp-console` page now acts as a browser-side lightweight client that calls the internal MCP client host APIs.
+
+Current audit behavior:
+
+- Non-static web/API requests receive an `X-Correlation-ID` response header.
+- User actions, MCP transport requests, internal MCP host calls, external Alpaca calls, and application startup events are stored in audit tables.
+- Sensitive fields are redacted before storage.
+- `/audit` displays recent audit records for demonstration and debugging.
 
 Current external MCP client behavior:
 
@@ -253,11 +262,8 @@ Covered behavior:
 
 The prototype does not yet include:
 
-- Full audit logging.
-- Correlation IDs.
-- User action logs.
-- MCP request logs.
-- External API call logs.
+- Audit filtering and export workflows.
+- Complete domain-specific audit coverage for every trade, position, and review event.
 - Production news provider integration.
 - Real broker provider integration.
 - IBKR account sync.

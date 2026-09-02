@@ -306,6 +306,10 @@ th {
   white-space: pre-wrap;
 }
 
+.audit-stack {
+  margin-top: 1.5rem;
+}
+
 .positive {
   color: #10704d;
 }

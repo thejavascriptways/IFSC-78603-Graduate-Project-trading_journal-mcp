@@ -27,6 +27,7 @@ flowchart LR
     CLI --> BMCP["Broker MCP"]
     CLI --> TMCP["Trading MCP"]
 
+    HOST --> AUDIT["Audit Logs"]
     HOST --> PMCP
     HOST --> MMCP
     HOST --> NMCP
@@ -44,6 +45,12 @@ flowchart LR
     NEWS --> DEMO["Demo News Adapter"]
     BROKER --> IBKR["IBKR Adapter Placeholder"]
     ORDERS --> SAFE["Preview-Only Safety Gate"]
+    MKT --> AUDIT
+    PMCP --> AUDIT
+    MMCP --> AUDIT
+    NMCP --> AUDIT
+    BMCP --> AUDIT
+    TMCP --> AUDIT
 ```
 
 ## 3. Code Boundaries Added
@@ -127,7 +134,22 @@ Purpose:
 
 Current files:
 
+- `app/audit/context.py`
 - `app/audit/events.py`
+- `app/audit/middleware.py`
+- `app/audit/service.py`
+
+Current audit tables:
+
+- `user_action_logs`
+- `mcp_request_logs`
+- `external_api_call_logs`
+- `application_event_logs`
+
+Current audit screens and APIs:
+
+- `/audit`
+- `/api/audit/logs`
 
 ### 3.5 Route Package
 
@@ -270,18 +292,36 @@ flowchart TD
     E --> F["live_trading_enabled remains false"]
 ```
 
-### 8.5 Future Audit Workflow
+### 8.5 Audit Workflow
 
 ```mermaid
 flowchart TD
     A["User action or MCP request"] --> B["Create audit event"]
     B --> C["Attach timestamp, client type, action name, status"]
     C --> D["Attach future correlation ID"]
-    D --> E["Persist to future audit log table"]
+    D --> E["Persist to audit log tables"]
     E --> F["Expose audit search in UI and MCP"]
 ```
 
-## 9. Verification
+## 9. Roadmap Progress Snapshot
+
+| Roadmap Area | Status | Current Notes |
+|---|---:|---|
+| 1. Prototype freeze and baseline | Mostly complete | Prototype docs and behavior are preserved |
+| 2. Architecture hardening | Partially complete | MCP modules, providers, route modules, and audit package exist |
+| 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, redaction, and viewer exist |
+| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; richer journal screens pending |
+| 5. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path exists; snapshot persistence pending |
+| 6. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
+| 7. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
+| 8. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
+| 9. Paper trading | Not started | No paper submission yet |
+| 10. Live trading safety gate | Not started | Live trading remains disabled |
+| 11. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
+| 12. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
+| 13. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
+
+## 10. Verification
 
 The test suite now includes architecture coverage for the expanded MCP topology.
 
@@ -294,5 +334,5 @@ python3 -m pytest
 Current passing baseline:
 
 ```text
-10 passed
+13 passed
 ```

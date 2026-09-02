@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card accent">
+  <p class="eyebrow">Observability</p>
+  <div class="section-head">
+    <div>
+      <h2>Audit Log</h2>
+      <p class="helper-copy">
+        This page shows the first persistent audit trail for the project: web/API actions,
+        MCP client/server requests, external provider calls, and application lifecycle events.
+      </p>
+    </div>
+    <a class="secondary-link" href="/api/audit/logs" target="_blank">Open JSON</a>
+  </div>
+</section>
+
+<section class="stack-grid audit-stack">
+  <div class="card">
+    <h2>User Actions</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Action</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>HTTP</th>
+            <th>Correlation ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs.user_actions %}
+            <tr>
+              <td>{{ log.occurred_at }}</td>
+              <td>{{ log.action }}</td>
+              <td>{{ log.client_type }}</td>
+              <td>{{ log.status }}</td>
+              <td>{{ log.status_code }}</td>
+              <td><code>{{ log.correlation_id }}</code></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6">No user actions logged yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>MCP Requests</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Server</th>
+            <th>Operation</th>
+            <th>Target</th>
+            <th>Status</th>
+            <th>Duration</th>
+            <th>Correlation ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs.mcp_requests %}
+            <tr>
+              <td>{{ log.occurred_at }}</td>
+              <td>{{ log.server_id }}</td>
+              <td>{{ log.operation }}</td>
+              <td>{{ log.target }}</td>
+              <td>{{ log.status }}</td>
+              <td>{{ log.duration_ms }} ms</td>
+              <td><code>{{ log.correlation_id }}</code></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7">No MCP requests logged yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>External API Calls</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Provider</th>
+            <th>Operation</th>
+            <th>Endpoint</th>
+            <th>Status</th>
+            <th>HTTP</th>
+            <th>Correlation ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs.external_api_calls %}
+            <tr>
+              <td>{{ log.occurred_at }}</td>
+              <td>{{ log.provider }}</td>
+              <td>{{ log.operation }}</td>
+              <td>{{ log.endpoint }}</td>
+              <td>{{ log.status }}</td>
+              <td>{{ log.status_code or "-" }}</td>
+              <td><code>{{ log.correlation_id }}</code></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7">No external API calls logged yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Application Events</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Event</th>
+            <th>Status</th>
+            <th>Message</th>
+            <th>Correlation ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs.application_events %}
+            <tr>
+              <td>{{ log.occurred_at }}</td>
+              <td>{{ log.event_type }}</td>
+              <td>{{ log.status }}</td>
+              <td>{{ log.message }}</td>
+              <td><code>{{ log.correlation_id }}</code></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5">No application events logged yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -6,6 +6,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.audit.middleware import AuditMiddleware
+from app.audit.service import log_application_event
 from app.config import settings
 from app.db import init_db, session_scope
 from app.market_data_mcp import create_market_data_mcp_server
@@ -28,6 +30,11 @@ def create_app() -> FastAPI:
         async with AsyncExitStack() as stack:
             with session_scope() as session:
                 seed_default_accounts(session)
+            log_application_event(
+                event_type="application_startup",
+                message="Trading Journal application startup completed.",
+                metadata={"mcp_servers": ["trading_journal", "market_data", "news", "broker", "trading"]},
+            )
             await stack.enter_async_context(trading_journal_mcp.session_manager.run())
             await stack.enter_async_context(market_data_mcp.session_manager.run())
             await stack.enter_async_context(news_mcp.session_manager.run())
@@ -38,6 +45,7 @@ def create_app() -> FastAPI:
     application = FastAPI(title=settings.app_name, lifespan=lifespan)
     templates = Jinja2Templates(directory=str(settings.templates_dir))
 
+    application.add_middleware(AuditMiddleware)
     application.mount("/static", StaticFiles(directory=str(settings.static_dir)), name="static")
     application.include_router(create_web_router(templates))
     application.include_router(create_api_router())

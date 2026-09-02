@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.audit.events import AuditEventStatus, ClientType
 from app.db import Base
 from app.models.enums import AccountSource, AssetClass, OrderSide, TradeOrigin
 
@@ -103,3 +104,66 @@ class Position(TimestampMixin, Base):
     instrument: Mapped["Instrument"] = relationship(back_populates="positions")
 
     __table_args__ = (UniqueConstraint("account_id", "instrument_id", name="uq_positions_account_instrument"),)
+
+
+class UserActionLog(Base):
+    __tablename__ = "user_action_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    correlation_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    client_type: Mapped[ClientType] = mapped_column(Enum(ClientType), nullable=False)
+    action: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    method: Mapped[str | None] = mapped_column(String(12))
+    path: Mapped[str | None] = mapped_column(String(255), index=True)
+    status: Mapped[AuditEventStatus] = mapped_column(Enum(AuditEventStatus), nullable=False)
+    status_code: Mapped[int | None] = mapped_column(Integer)
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON)
+
+
+class MCPRequestLog(Base):
+    __tablename__ = "mcp_request_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    correlation_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    client_type: Mapped[ClientType] = mapped_column(Enum(ClientType), nullable=False)
+    server_id: Mapped[str | None] = mapped_column(String(80), index=True)
+    operation: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    target: Mapped[str | None] = mapped_column(String(255))
+    status: Mapped[AuditEventStatus] = mapped_column(Enum(AuditEventStatus), nullable=False)
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    request_metadata_json: Mapped[dict | None] = mapped_column(JSON)
+    response_metadata_json: Mapped[dict | None] = mapped_column(JSON)
+
+
+class ExternalAPICallLog(Base):
+    __tablename__ = "external_api_call_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    correlation_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    provider: Mapped[str] = mapped_column(String(80), index=True, nullable=False)
+    operation: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    endpoint: Mapped[str | None] = mapped_column(String(255))
+    status: Mapped[AuditEventStatus] = mapped_column(Enum(AuditEventStatus), nullable=False)
+    status_code: Mapped[int | None] = mapped_column(Integer)
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    request_metadata_json: Mapped[dict | None] = mapped_column(JSON)
+    response_metadata_json: Mapped[dict | None] = mapped_column(JSON)
+
+
+class ApplicationEventLog(Base):
+    __tablename__ = "application_event_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    correlation_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(120), index=True, nullable=False)
+    status: Mapped[AuditEventStatus] = mapped_column(Enum(AuditEventStatus), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON)

@@ -61,6 +61,8 @@ The prototype already includes:
 - Trading Journal MCP server for account, trade, position, summary, resources, and prompts.
 - Internal MCP client behavior from the web app to the market-data MCP server.
 - CLI demo client for MCP discovery and tool calls.
+- Browser MCP Console for MCP discovery and direct tool/resource/prompt testing.
+- Initial audit logging with correlation IDs, persistent log tables, redaction, and an audit viewer.
 
 These features are the foundation, but they should be hardened and modularized before adding real broker trading.
 

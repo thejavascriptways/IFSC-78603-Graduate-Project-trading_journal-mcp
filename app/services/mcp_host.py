@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from time import perf_counter
 from typing import Any, Awaitable, Callable, TypeVar
 
 import httpx
 from fastapi import FastAPI
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+
+from app.audit.context import CORRELATION_ID_HEADER, current_correlation_id
+from app.audit.events import AuditEventStatus, ClientType
+from app.audit.service import duration_ms_since, log_mcp_request
 
 
 T = TypeVar("T")
@@ -71,6 +76,7 @@ def get_registered_mcp_server(server_id: str) -> MCPServerConfig:
 
 async def list_server_catalog(app: FastAPI, server_id: str) -> dict[str, Any]:
     server = get_registered_mcp_server(server_id)
+    started_at = perf_counter()
 
     async def operation(session: ClientSession) -> dict[str, Any]:
         tools_result = await session.list_tools()
@@ -113,27 +119,101 @@ async def list_server_catalog(app: FastAPI, server_id: str) -> dict[str, Any]:
             ],
         }
 
-    return await _run_client_operation(app, server, operation)
+    try:
+        result = await _run_client_operation(app, server, operation)
+    except MCPHostError:
+        log_mcp_request(
+            server_id=server_id,
+            operation="list_catalog",
+            target=server.url,
+            client_type=ClientType.INTERNAL_MCP_CLIENT,
+            status=AuditEventStatus.FAILURE,
+            duration_ms=duration_ms_since(started_at),
+            message=f"Failed to discover MCP catalog for {server.name}.",
+        )
+        raise
+    log_mcp_request(
+        server_id=server_id,
+        operation="list_catalog",
+        target=server.url,
+        client_type=ClientType.INTERNAL_MCP_CLIENT,
+        duration_ms=duration_ms_since(started_at),
+        message=f"Discovered MCP catalog for {server.name}.",
+        response_metadata={
+            "tool_count": len(result["tools"]),
+            "resource_count": len(result["resources"]),
+            "prompt_count": len(result["prompts"]),
+        },
+    )
+    return result
 
 
 async def call_server_tool(app: FastAPI, server_id: str, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     server = get_registered_mcp_server(server_id)
+    started_at = perf_counter()
 
     async def operation(session: ClientSession) -> dict[str, Any]:
         result = await session.call_tool(tool_name, arguments=arguments)
         return result.model_dump(mode="json")
 
-    return await _run_client_operation(app, server, operation)
+    try:
+        result = await _run_client_operation(app, server, operation)
+    except MCPHostError:
+        log_mcp_request(
+            server_id=server_id,
+            operation="call_tool",
+            target=tool_name,
+            client_type=ClientType.INTERNAL_MCP_CLIENT,
+            status=AuditEventStatus.FAILURE,
+            duration_ms=duration_ms_since(started_at),
+            message=f"Failed to call MCP tool {tool_name}.",
+            request_metadata={"arguments": arguments},
+        )
+        raise
+    log_mcp_request(
+        server_id=server_id,
+        operation="call_tool",
+        target=tool_name,
+        client_type=ClientType.INTERNAL_MCP_CLIENT,
+        duration_ms=duration_ms_since(started_at),
+        message=f"Called MCP tool {tool_name}.",
+        request_metadata={"arguments": arguments},
+        response_metadata={"has_structured_content": bool(result.get("structuredContent"))},
+    )
+    return result
 
 
 async def read_server_resource(app: FastAPI, server_id: str, uri: str) -> dict[str, Any]:
     server = get_registered_mcp_server(server_id)
+    started_at = perf_counter()
 
     async def operation(session: ClientSession) -> dict[str, Any]:
         result = await session.read_resource(uri)
         return result.model_dump(mode="json")
 
-    return await _run_client_operation(app, server, operation)
+    try:
+        result = await _run_client_operation(app, server, operation)
+    except MCPHostError:
+        log_mcp_request(
+            server_id=server_id,
+            operation="read_resource",
+            target=uri,
+            client_type=ClientType.INTERNAL_MCP_CLIENT,
+            status=AuditEventStatus.FAILURE,
+            duration_ms=duration_ms_since(started_at),
+            message=f"Failed to read MCP resource {uri}.",
+        )
+        raise
+    log_mcp_request(
+        server_id=server_id,
+        operation="read_resource",
+        target=uri,
+        client_type=ClientType.INTERNAL_MCP_CLIENT,
+        duration_ms=duration_ms_since(started_at),
+        message=f"Read MCP resource {uri}.",
+        response_metadata={"content_count": len(result.get("contents", []))},
+    )
+    return result
 
 
 async def get_server_prompt(
@@ -143,12 +223,37 @@ async def get_server_prompt(
     arguments: dict[str, str],
 ) -> dict[str, Any]:
     server = get_registered_mcp_server(server_id)
+    started_at = perf_counter()
 
     async def operation(session: ClientSession) -> dict[str, Any]:
         result = await session.get_prompt(prompt_name, arguments=arguments or None)
         return result.model_dump(mode="json")
 
-    return await _run_client_operation(app, server, operation)
+    try:
+        result = await _run_client_operation(app, server, operation)
+    except MCPHostError:
+        log_mcp_request(
+            server_id=server_id,
+            operation="get_prompt",
+            target=prompt_name,
+            client_type=ClientType.INTERNAL_MCP_CLIENT,
+            status=AuditEventStatus.FAILURE,
+            duration_ms=duration_ms_since(started_at),
+            message=f"Failed to render MCP prompt {prompt_name}.",
+            request_metadata={"arguments": arguments},
+        )
+        raise
+    log_mcp_request(
+        server_id=server_id,
+        operation="get_prompt",
+        target=prompt_name,
+        client_type=ClientType.INTERNAL_MCP_CLIENT,
+        duration_ms=duration_ms_since(started_at),
+        message=f"Rendered MCP prompt {prompt_name}.",
+        request_metadata={"arguments": arguments},
+        response_metadata={"message_count": len(result.get("messages", []))},
+    )
+    return result
 
 
 async def _run_client_operation(
@@ -162,6 +267,7 @@ async def _run_client_operation(
             transport=transport,
             base_url="http://127.0.0.1:8000",
             follow_redirects=True,
+            headers={CORRELATION_ID_HEADER: current_correlation_id()},
         ) as http_client:
             async with streamable_http_client(server.url, http_client=http_client) as (read, write, _):
                 async with ClientSession(read, write) as session:
