@@ -311,15 +311,17 @@ flowchart TD
 | 2. Architecture hardening | Partially complete | MCP modules, providers, route modules, and audit package exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, redaction, and viewer exist |
 | 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; richer journal screens pending |
-| 5. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path exists; snapshot persistence pending |
-| 6. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
-| 7. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
-| 8. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
-| 9. Paper trading | Not started | No paper submission yet |
-| 10. Live trading safety gate | Not started | Live trading remains disabled |
-| 11. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
-| 12. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
-| 13. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
+| 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
+| 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
+| 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path exists; snapshot persistence pending |
+| 8. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
+| 9. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
+| 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
+| 11. Paper trading | Not started | No paper submission yet |
+| 12. Live trading safety gate | Not started | Live trading remains disabled |
+| 13. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
+| 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
+| 15. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
 
 ## 10. Verification
 

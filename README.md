@@ -10,6 +10,7 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 - Demonstrate MCP concepts using a real financial application instead of a toy example.
 - Support multiple asset classes such as stocks, ETFs, mutual funds, bonds, options, and cash.
 - Track realized and unrealized P&L across accounts and asset classes.
+- Add watchlists so the user can track symbols before taking a trade.
 - Show how an application can act as both an MCP server and an MCP client.
 - Prepare for future IBKR broker sync, stock news, order staging, paper trading, and safe live-trading workflows.
 

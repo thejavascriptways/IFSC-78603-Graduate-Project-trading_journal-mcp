@@ -195,7 +195,49 @@ Acceptance criteria:
 - Dashboard tables support the required account/account-type/asset-class breakdowns.
 - UI feels modern, consistent, readable, and suitable for daily trading review.
 
-## 7. Phase 4: Market Data MCP Server V2
+## 7. Phase 3A: Watchlist Core
+
+Goal: add a day-to-day watchlist workflow for tracking symbols before they become trades or portfolio positions.
+
+MCP design decision:
+
+- Do not create a separate Watchlist MCP server for V1.
+- Add watchlist tools/resources to the existing Trading Journal MCP server because watchlists are part of the user's journal and portfolio workspace.
+- Reuse Market Data MCP for quote/price data on watchlist symbols.
+- Reuse News MCP for news on watchlist symbols.
+- Consider a separate Watchlist MCP server later only if watchlists become a large independent subsystem with alerts, strategy scoring, screeners, or multi-user collaboration.
+
+Deliverables:
+
+- Watchlist page in the web app.
+- Add symbols to a watchlist.
+- Remove symbols from a watchlist.
+- Store watchlist items in the database.
+- Show symbol, asset class, notes, created date, live quote status, and latest news status.
+- Add audit logs for watchlist add/remove actions.
+
+Implementation tasks:
+
+- Add `Watchlist` and `WatchlistItem` database models.
+- Add service functions for creating a default watchlist, listing items, adding symbols, and removing symbols.
+- Add web routes for `/watchlist`, add-symbol form submission, and remove-symbol action.
+- Add API routes for watchlist list/add/remove.
+- Add Trading Journal MCP tools: `list_watchlist`, `add_watchlist_symbol`, and `remove_watchlist_symbol`.
+- Add Trading Journal MCP resource: `portfolio://watchlist`.
+- Use Market Data MCP to enrich watchlist rows with quote status where available.
+- Use News MCP later to enrich watchlist rows with latest news.
+- Add tests for add/remove/list behavior, duplicate handling, audit logging, and MCP discovery.
+
+Acceptance criteria:
+
+- User can open a Watchlist screen from navigation.
+- User can add a stock/ETF/etc. symbol to the watchlist.
+- User can remove a symbol from the watchlist.
+- Duplicate symbols are handled cleanly.
+- MCP clients can list, add, and remove watchlist symbols through approved Trading Journal MCP tools.
+- Watchlist actions appear in the audit log.
+
+## 8. Phase 4: Market Data MCP Server V2
 
 Goal: turn market data into a robust MCP-backed subsystem.
 
@@ -225,7 +267,7 @@ Acceptance criteria:
 - MCP client can fetch single-symbol and batch quotes.
 - Provider failures appear in UI and audit logs.
 
-## 8. Phase 5: News MCP Server
+## 9. Phase 5: News MCP Server
 
 Goal: add stock news and make it visible both in the UI and through MCP.
 
@@ -262,7 +304,7 @@ Acceptance criteria:
 - MCP client can retrieve news through News MCP.
 - News API failures are logged and displayed clearly.
 
-## 9. Phase 6: Broker MCP Server for IBKR Sync
+## 10. Phase 6: Broker MCP Server for IBKR Sync
 
 Goal: connect to IBKR for read-only broker data before allowing any trading.
 
@@ -297,7 +339,7 @@ Acceptance criteria:
 - App can sync executions without creating duplicates.
 - All broker calls are logged with correlation IDs and redacted payloads.
 
-## 10. Phase 7: Order Staging and Preview
+## 11. Phase 7: Order Staging and Preview
 
 Goal: support trade planning and broker order preview without placing live orders.
 
@@ -329,7 +371,7 @@ Acceptance criteria:
 - MCP client can stage and preview orders.
 - Audit log clearly shows staged/previewed status.
 
-## 11. Phase 8: Paper Trading
+## 12. Phase 8: Paper Trading
 
 Goal: allow order submission only in paper/sandbox mode.
 
@@ -358,7 +400,7 @@ Acceptance criteria:
 - Trade reason is preserved from the order ticket.
 - No live order route/tool is active by default.
 
-## 12. Phase 9: Live Trading Safety Gate
+## 13. Phase 9: Live Trading Safety Gate
 
 Goal: add live trading only after paper trading and audit logs are reliable.
 
@@ -387,7 +429,7 @@ Acceptance criteria:
 - UI clearly shows paper vs live.
 - Tests prove live trading guard blocks unauthorized requests.
 
-## 13. Phase 10: MCP Learning Console V2
+## 14. Phase 10: MCP Learning Console V2
 
 Goal: make MCP behavior easy to demonstrate without relying only on terminal commands.
 
@@ -416,7 +458,7 @@ Acceptance criteria:
 - User can see raw request/response flow.
 - Audit log connects the console action to the MCP server/tool.
 
-## 14. Phase 11: Reports, Exports, and Review Workflows
+## 15. Phase 11: Reports, Exports, and Review Workflows
 
 Goal: make the app useful for real day-to-day review.
 
@@ -443,7 +485,7 @@ Acceptance criteria:
 - User can export records.
 - User can identify trades missing useful journal context.
 
-## 15. Phase 12: Deployment Readiness
+## 16. Phase 12: Deployment Readiness
 
 Goal: keep the real application local-first for safe personal use, while also preparing a simple public demo deployment for professor review.
 
@@ -487,7 +529,7 @@ Acceptance criteria:
 - Trading actions remain confirmation-gated.
 - Database can be backed up and restored.
 
-## 16. Cross-Cutting Testing Plan
+## 17. Cross-Cutting Testing Plan
 
 Every phase should include tests.
 
@@ -504,6 +546,8 @@ Required test groups:
 - News provider mock tests.
 - Broker provider mock tests.
 - Order preview safety tests.
+- Watchlist add/remove/list tests.
+- Watchlist MCP tests.
 - Paper trading tests.
 - Live trading guard tests.
 
@@ -513,7 +557,7 @@ Testing rule:
 - Real provider calls should be limited to manual integration tests.
 - Live trading must never run in automated tests.
 
-## 17. Risk Management
+## 18. Risk Management
 
 Major risks and mitigations:
 
@@ -523,9 +567,10 @@ Major risks and mitigations:
 - News API rate limits: cache responses.
 - Database migration risk: add migrations before heavy model changes.
 - MCP complexity: keep each MCP server focused and provide a browser-based learning console.
+- MCP server sprawl: keep watchlist in Trading Journal MCP first, then split only if the watchlist domain becomes independently complex.
 - Sensitive log data: enforce redaction before saving audit records.
 
-## 18. Recommended Immediate Next Step
+## 19. Recommended Immediate Next Step
 
 The next implementation step should continue **Phase 2 audit logging and observability**:
 

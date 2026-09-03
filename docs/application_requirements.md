@@ -363,6 +363,8 @@ The application should support watchlists in V1 or V2.
 Watchlist requirements:
 
 - Add/remove symbols.
+- Add/remove stocks from the watchlist from the web app.
+- Expose watchlist list/add/remove through Trading Journal MCP tools instead of creating a new MCP server in V1.
 - Group by theme or strategy.
 - Show live quote status.
 - Show latest news.
