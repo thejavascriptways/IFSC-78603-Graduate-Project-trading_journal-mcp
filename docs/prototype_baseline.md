@@ -38,7 +38,7 @@ The prototype currently uses:
 The prototype exposes these main browser pages:
 
 - `/`: dashboard with accounts, open positions, closed positions, recent trades, and P&L tables.
-- `/holdings/import`: opening holding import form for manually entered existing holdings.
+- `/holdings/import`: opening holding import form for one manually entered holding or bulk CSV upload.
 - `/trades/new`: manual trade entry form.
 - `/trades`: trade history.
 - `/positions`: open positions, mark price updates, and market-data refresh.
@@ -119,10 +119,11 @@ The prototype includes a Market Data MCP server backed by Alpaca configuration.
 
 Supported behavior:
 
-- Reads `ALPACA_API_KEY_ID`.
-- Reads `ALPACA_API_SECRET_KEY`.
-- Reads `ALPACA_STOCK_FEED`.
-- Reads `ALPACA_OPTION_FEED`.
+- Provides `/settings/market-data/alpaca` for browser-based Alpaca credential entry.
+- Stores local Alpaca settings in a Git-ignored `instance/alpaca_market_data.json` file.
+- Masks saved credential status in the UI.
+- Reads `ALPACA_API_KEY_ID` and `ALPACA_API_SECRET_KEY` as fallback values.
+- Reads `ALPACA_STOCK_FEED` and `ALPACA_OPTION_FEED` as fallback values.
 - Fetches stock/ETF snapshots through Alpaca stock snapshots.
 - Fetches option snapshots through Alpaca option snapshots.
 - Builds live market-data rows for open and closed portfolio symbols.
@@ -250,6 +251,7 @@ Covered behavior:
 - Manual trade updates positions.
 - Trade reason is required.
 - Opening holding import seeds positions.
+- Bulk CSV opening holding import seeds positions and reports row-level validation errors.
 - Duplicate opening holding import is rejected.
 - Partial sell updates quantity, cost basis, and realized P&L.
 - Manual mark price updates unrealized P&L.

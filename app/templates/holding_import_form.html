@@ -5,13 +5,28 @@
     <div class="section-head">
       <div>
         <p class="eyebrow">Starting Portfolio</p>
-        <h2>Import Opening Holding</h2>
+        <h2>Import One Opening Holding</h2>
       </div>
       <p class="helper-copy">Use this once per existing manual position so Trading Journal starts with the right quantity and cost basis.</p>
     </div>
 
     {% if error %}
     <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    {% if notice %}
+    <div class="notice-banner">{{ notice }}</div>
+    {% endif %}
+
+    {% if bulk_errors %}
+    <div class="error-banner">
+      <strong>CSV row errors</strong>
+      <ul class="plain-list">
+        {% for row_error in bulk_errors %}
+        <li>{{ row_error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
     {% endif %}
 
     <form action="/holdings/import" method="post" class="trade-form">
@@ -68,8 +83,70 @@
         <textarea name="notes" rows="4" placeholder="Optional context about where this opening position came from."></textarea>
       </label>
 
-      <button type="submit" class="primary-button">Import Holding</button>
+      <button type="submit" class="primary-button">Import One Holding</button>
     </form>
   </article>
+</section>
+
+<section class="content-grid">
+  <article class="card form-card">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Bulk Upload</p>
+        <h2>Import Holdings From CSV</h2>
+      </div>
+      <p class="helper-copy">
+        Upload many existing holdings at once. Each row becomes an opening holding import and uses the same accounting rules as the manual form.
+      </p>
+    </div>
+
+    <form action="/holdings/import/csv" method="post" enctype="multipart/form-data" class="console-form">
+      <label>
+        CSV File
+        <input class="console-control" type="file" name="csv_file" accept=".csv,text/csv" required />
+      </label>
+      <button type="submit" class="primary-button">Import CSV Holdings</button>
+    </form>
+  </article>
+
+  <aside class="card">
+    <p class="eyebrow">CSV Template</p>
+    <h3>Required Format</h3>
+    <p class="helper-copy">
+      Use these exact headers. <code>account_name</code> should match one of your manual accounts, such as <code>Manual Fidelity</code>.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Required</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>account_name</code></td><td>Yes</td><td>Manual Fidelity</td></tr>
+          <tr><td><code>symbol</code></td><td>Yes</td><td>VOO</td></tr>
+          <tr><td><code>description</code></td><td>No</td><td>Vanguard S&amp;P 500 ETF</td></tr>
+          <tr><td><code>asset_class</code></td><td>Yes</td><td>ETF</td></tr>
+          <tr><td><code>opening_date</code></td><td>Yes</td><td>2026-01-02</td></tr>
+          <tr><td><code>quantity</code></td><td>Yes</td><td>10</td></tr>
+          <tr><td><code>average_cost</code></td><td>Yes</td><td>500.25</td></tr>
+          <tr><td><code>currency</code></td><td>No</td><td>USD</td></tr>
+          <tr><td><code>notes</code></td><td>No</td><td>Initial Fidelity import</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </aside>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Copy/Paste Sample</p>
+      <h2>Sample CSV</h2>
+    </div>
+  </div>
+  <pre class="console-output">{{ sample_csv }}</pre>
 </section>
 {% endblock %}

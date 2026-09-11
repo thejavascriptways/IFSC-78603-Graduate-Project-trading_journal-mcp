@@ -127,6 +127,68 @@ def test_opening_holding_import_seeds_position_and_supports_future_trades(app_in
         assert sell_trade["realized_pnl"] == "998.000000"
 
 
+def test_holding_import_page_supports_bulk_csv_import(app_instance):
+    with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
+        page_response = client.get("/holdings/import")
+        assert page_response.status_code == 200
+        assert "Import One Opening Holding" in page_response.text
+        assert "Import Holdings From CSV" in page_response.text
+        assert "account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes" in page_response.text
+
+        csv_content = (
+            "account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes\n"
+            "Manual Fidelity,VTI,Vanguard Total Stock Market ETF,ETF,2026-01-02,10,250.50,USD,Core allocation\n"
+            "Manual Fidelity,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term position\n"
+        )
+
+        import_response = client.post(
+            "/holdings/import/csv",
+            files={"csv_file": ("holdings.csv", csv_content, "text/csv")},
+        )
+
+        assert import_response.status_code == 200
+        assert "Imported 2 holding(s) from CSV." in import_response.text
+
+        positions = client.get("/api/positions").json()
+        assert {position["symbol"] for position in positions} == {"AAPL", "VTI"}
+        vti_position = next(position for position in positions if position["symbol"] == "VTI")
+        assert vti_position["quantity"] == "10.000000"
+        assert vti_position["average_cost"] == "250.500000"
+
+
+def test_holding_bulk_csv_import_reports_row_errors(app_instance):
+    with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
+        csv_content = (
+            "account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes\n"
+            "Manual Fidelity,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,3,500,USD,Valid row\n"
+            "Manual Fidelity,BAD,Bad Asset,INVALID,2026-01-02,2,10,USD,Invalid row\n"
+        )
+
+        import_response = client.post(
+            "/holdings/import/csv",
+            files={"csv_file": ("holdings.csv", csv_content, "text/csv")},
+        )
+
+        assert import_response.status_code == 207
+        assert "Imported 1 holding(s) from CSV. 1 row(s) failed." in import_response.text
+        assert "Row 3 (BAD)" in import_response.text
+
+        positions = client.get("/api/positions").json()
+        assert len(positions) == 1
+        assert positions[0]["symbol"] == "VOO"
+
+
+def test_holding_bulk_csv_import_requires_template_headers(app_instance):
+    with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
+        import_response = client.post(
+            "/holdings/import/csv",
+            files={"csv_file": ("holdings.csv", "symbol,quantity\nVOO,1\n", "text/csv")},
+        )
+
+    assert import_response.status_code == 400
+    assert "CSV is missing required columns" in import_response.text
+
+
 def test_mark_price_updates_unrealized_pnl_and_full_close_moves_position_to_closed_history(app_instance):
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         accounts_response = client.get("/api/accounts")

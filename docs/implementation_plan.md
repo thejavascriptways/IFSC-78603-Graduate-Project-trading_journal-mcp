@@ -13,6 +13,26 @@ The current application is the accepted prototype. The next work should convert 
 
 This sequence matters because live trading should not be added until the app can explain what happened, store every important event, and recover cleanly from provider or broker errors.
 
+## Current Roadmap Progress Snapshot
+
+| Roadmap Area | Status | Current Notes |
+|---|---:|---|
+| 1. Prototype freeze and baseline | Mostly complete | Prototype docs, tests, and accepted behavior are preserved |
+| 2. Architecture hardening | Partially complete | MCP modules, provider modules, route modules, audit package, and local settings structure exist |
+| 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, external API logs, redaction, and viewer exist |
+| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import is complete in the prototype path |
+| 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
+| 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
+| 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and browser-based Alpaca settings screen exist; quote persistence pending |
+| 8. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
+| 9. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
+| 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
+| 11. Paper trading | Not started | No paper submission yet |
+| 12. Live trading safety gate | Not started | Live trading remains disabled |
+| 13. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
+| 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
+| 15. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
+
 ## 2. Target Architecture
 
 ```mermaid
@@ -168,6 +188,7 @@ Deliverables:
 - Improved account management.
 - Improved instrument management.
 - Better trade entry and close-position workflow.
+- Bulk CSV import for opening holdings. `Complete in prototype path.`
 - Post-trade review support.
 - Better P&L reporting and filters.
 - Modern UI refresh with a polished cool/cold theme and consistent design system.
@@ -176,6 +197,7 @@ Implementation tasks:
 
 - Add account create/edit screens.
 - Add account type field.
+- Keep one-holding manual import and add CSV upload with sample template and row-level errors. `Complete in prototype path.`
 - Add instrument detail page.
 - Add symbol normalization and broker contract metadata fields.
 - Add journal entry model and UI.
@@ -245,6 +267,7 @@ Deliverables:
 
 - Provider interface for market data.
 - Alpaca provider retained.
+- Browser-based Alpaca settings screen for local credentials and feed selection. `Complete in prototype path.`
 - IBKR market-data provider added when broker connectivity is ready.
 - Quote snapshot storage.
 - Quote freshness and entitlement status shown in UI.
@@ -254,6 +277,7 @@ Implementation tasks:
 
 - Define `MarketDataProvider` interface.
 - Move Alpaca-specific code into `app/providers/market_data/alpaca.py`.
+- Keep Alpaca API keys out of Git and expose masked configuration status in the UI. `Complete for local settings.`
 - Add quote snapshot persistence.
 - Add quote status labels: live, delayed, end-of-day, manual, unavailable.
 - Add `get_quote`, `get_quotes`, `get_price_history`, and `refresh_open_position_marks` MCP tools.

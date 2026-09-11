@@ -18,6 +18,7 @@ class Settings:
     secret_key: str = os.getenv("TRADING_JOURNAL_SECRET_KEY", "dev-secret-key")
     templates_dir: Path = BASE_DIR / "app" / "templates"
     static_dir: Path = BASE_DIR / "app" / "static"
+    local_settings_dir: Path = Path(os.getenv("TRADING_JOURNAL_LOCAL_SETTINGS_DIR", BASE_DIR / "instance"))
     static_asset_version: str = os.getenv("TRADING_JOURNAL_STATIC_ASSET_VERSION", "nav-v3")
     market_data_provider: str = os.getenv("TRADING_JOURNAL_MARKET_DATA_PROVIDER", "alpaca")
     alpaca_market_data_base_url: str = os.getenv("ALPACA_MARKET_DATA_BASE_URL", "https://data.alpaca.markets")

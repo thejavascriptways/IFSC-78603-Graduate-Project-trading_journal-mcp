@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-grid">
+  <article class="card accent">
+    <p class="eyebrow">Market Data Configuration</p>
+    <h2>Alpaca Settings</h2>
+    <p class="helper-copy">
+      Save Alpaca market-data credentials here instead of exporting them in the command prompt.
+      The Market Data MCP server will use these settings for live stock, ETF, and option quote requests.
+    </p>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    {% if notice %}
+    <div class="notice-banner">{{ notice }}</div>
+    {% endif %}
+
+    <div class="settings-status-grid">
+      <div class="metric-tile">
+        <span>Configured</span>
+        <strong>{{ "Yes" if alpaca_settings.configured else "No" }}</strong>
+      </div>
+      <div class="metric-tile">
+        <span>Source</span>
+        <strong>{{ alpaca_settings.source }}</strong>
+      </div>
+      <div class="metric-tile">
+        <span>API Key ID</span>
+        <strong>{{ alpaca_settings.masked_api_key_id }}</strong>
+      </div>
+      <div class="metric-tile">
+        <span>Secret Key</span>
+        <strong>{{ alpaca_settings.secret_status }}</strong>
+      </div>
+    </div>
+  </article>
+
+  <aside class="card">
+    <p class="eyebrow">Security Note</p>
+    <h3>Local Development Storage</h3>
+    <p class="helper-copy">
+      Credentials are saved locally in a Git-ignored <code>instance/</code> file and are masked in the UI.
+      This is convenient for the local prototype, but before internet deployment we should move secrets to
+      a production secret manager.
+    </p>
+    <ul class="plain-list">
+      <li>Saved file: <code>{{ alpaca_settings.storage_path }}</code></li>
+      <li>File exists: {{ "Yes" if alpaca_settings.local_file_exists else "No" }}</li>
+      <li>Environment variables still work as fallback.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="form-layout">
+  <article class="card form-card">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Credential Entry</p>
+        <h2>Update Alpaca Market Data</h2>
+      </div>
+      <p class="helper-copy">
+        Leave API key fields blank to keep existing saved values. Enter both fields when setting up for the first time.
+      </p>
+    </div>
+
+    <form action="/settings/market-data/alpaca" method="post" class="trade-form">
+      <label>
+        API Key ID
+        <input type="password" name="api_key_id" placeholder="Paste Alpaca API key ID" autocomplete="off" />
+      </label>
+
+      <label>
+        Secret Key
+        <input type="password" name="api_secret_key" placeholder="Paste Alpaca secret key" autocomplete="off" />
+      </label>
+
+      <label>
+        Stock / ETF Feed
+        <select name="stock_feed" required>
+          {% for feed in alpaca_settings.stock_feed_options %}
+          <option value="{{ feed }}" {% if alpaca_settings.stock_feed == feed %}selected{% endif %}>{{ feed }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        Option Feed
+        <select name="option_feed" required>
+          {% for feed in alpaca_settings.option_feed_options %}
+          <option value="{{ feed }}" {% if alpaca_settings.option_feed == feed %}selected{% endif %}>{{ feed }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="full-span">
+        Alpaca Market Data Base URL
+        <input type="url" name="base_url" value="{{ alpaca_settings.base_url }}" required />
+      </label>
+
+      <div class="action-row full-span">
+        <button type="submit" class="primary-button">Save Alpaca Settings</button>
+        <a href="/market-data" class="secondary-link">Open Market Data</a>
+      </div>
+    </form>
+
+    <form action="/settings/market-data/alpaca/clear" method="post" class="settings-danger-form">
+      <p class="helper-copy">
+        Clear removes only the saved local file. If environment variables are set, the app can still use them.
+      </p>
+      <button type="submit" class="secondary-button">Clear Saved Alpaca Settings</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

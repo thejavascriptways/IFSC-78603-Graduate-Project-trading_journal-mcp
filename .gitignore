@@ -17,6 +17,7 @@ env/
 *.db
 *.sqlite
 *.sqlite3
+instance/
 
 # Secrets and local environment
 .env

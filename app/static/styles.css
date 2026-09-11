@@ -206,6 +206,35 @@ h1 {
   margin-bottom: 0;
 }
 
+.settings-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.metric-tile {
+  border: 1px solid rgba(14, 109, 93, 0.14);
+  border-radius: 18px;
+  padding: 0.9rem;
+  background: rgba(255, 254, 248, 0.72);
+}
+
+.metric-tile span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metric-tile strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
 code {
   padding: 0.12rem 0.4rem;
   border-radius: 999px;
@@ -341,6 +370,14 @@ th {
 .inline-form .secondary-button {
   min-height: 38px;
   padding: 0.55rem 0.85rem;
+}
+
+.settings-danger-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(216, 207, 191, 0.8);
 }
 
 .console-grid {

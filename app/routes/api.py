@@ -187,7 +187,7 @@ def create_api_router() -> APIRouter:
             open_targets = [target for target in targets if target["status"] == "OPEN"]
             live_payload = await fetch_live_market_data_from_mcp(request.app, open_targets)
             if live_payload["capabilities"].get("configured") is not True:
-                raise MarketDataError("Live market data is not configured. Set ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY.")
+                raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
             refresh_result = apply_live_market_data_to_open_positions(
                 session,
                 open_targets,

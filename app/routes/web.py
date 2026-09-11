@@ -4,17 +4,29 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.audit.service import list_recent_audit_logs
+from app.audit.events import AuditEventStatus, ClientType
+from app.audit.service import list_recent_audit_logs, log_user_action
 from app.config import settings
 from app.db import get_session
 from app.models.enums import AssetClass, OrderSide
 from app.schemas import ManualTradeCreate, OpeningHoldingCreate, PositionMarkUpdate
+from app.services.holding_import import (
+    HoldingImportCsvError,
+    OPENING_HOLDING_SAMPLE_CSV,
+    import_opening_holdings_from_csv,
+)
+from app.services.market_data_settings import (
+    MarketDataSettingsError,
+    clear_alpaca_market_data_settings,
+    get_alpaca_settings_view_model,
+    save_alpaca_market_data_settings,
+)
 from app.services.market_data import (
     MarketDataError,
     apply_live_market_data_to_open_positions,
@@ -114,6 +126,23 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             "selected_server_id": selected_server_id,
         }
 
+    def build_holding_import_context(
+        session: Session,
+        *,
+        error: str | None = None,
+        notice: str | None = None,
+        bulk_errors: list[str] | None = None,
+    ) -> dict[str, object]:
+        return {
+            "accounts": list_manual_accounts(session),
+            "asset_classes": list(AssetClass),
+            "error": error,
+            "notice": notice,
+            "today": date.today().isoformat(),
+            "sample_csv": OPENING_HOLDING_SAMPLE_CSV,
+            "bulk_errors": bulk_errors or [],
+        }
+
     @router.get("/", response_class=HTMLResponse)
     def dashboard(request: Request, session: Session = Depends(get_session)):
         data = get_dashboard_data(session)
@@ -186,7 +215,7 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             error_message = str(exc)
 
         if capabilities.get("configured") is not True and error_message is None:
-            error_message = "Live market data is not configured. Set ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY."
+            error_message = "Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings."
 
         return templates.TemplateResponse(
             request=request,
@@ -226,6 +255,98 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             context={"audit_logs": list_recent_audit_logs(session, limit=50)},
         )
 
+    @router.get("/settings/market-data/alpaca", response_class=HTMLResponse)
+    def alpaca_settings_page(
+        request: Request,
+        error: str | None = None,
+        notice: str | None = None,
+    ):
+        return templates.TemplateResponse(
+            request=request,
+            name="alpaca_settings.html",
+            context={
+                "error": error,
+                "notice": notice,
+                "alpaca_settings": get_alpaca_settings_view_model(),
+            },
+        )
+
+    @router.post("/settings/market-data/alpaca", response_class=HTMLResponse)
+    def save_alpaca_settings(
+        request: Request,
+        api_key_id: str | None = Form(default=None),
+        api_secret_key: str | None = Form(default=None),
+        stock_feed: str = Form(...),
+        option_feed: str = Form(...),
+        base_url: str = Form(...),
+        session: Session = Depends(get_session),
+    ):
+        try:
+            saved_settings = save_alpaca_market_data_settings(
+                api_key_id=api_key_id,
+                api_secret_key=api_secret_key,
+                stock_feed=stock_feed,
+                option_feed=option_feed,
+                base_url=base_url,
+            )
+            log_user_action(
+                session,
+                action="save_alpaca_market_data_settings",
+                client_type=ClientType.WEB_UI,
+                method=request.method,
+                path=request.url.path,
+                status=AuditEventStatus.SUCCESS,
+                message="Alpaca market-data settings were saved.",
+                metadata={
+                    "configured": saved_settings.configured,
+                    "source": saved_settings.source,
+                    "stock_feed": saved_settings.stock_feed,
+                    "option_feed": saved_settings.option_feed,
+                    "base_url": saved_settings.base_url,
+                    "api_key_id": saved_settings.masked_api_key_id,
+                    "api_secret_key": saved_settings.secret_status,
+                },
+            )
+        except MarketDataSettingsError as exc:
+            session.rollback()
+            return templates.TemplateResponse(
+                request=request,
+                name="alpaca_settings.html",
+                context={
+                    "error": str(exc),
+                    "notice": None,
+                    "alpaca_settings": get_alpaca_settings_view_model(),
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return RedirectResponse(
+            url="/settings/market-data/alpaca?notice=Alpaca+settings+saved",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @router.post("/settings/market-data/alpaca/clear", response_class=HTMLResponse)
+    def clear_alpaca_settings(request: Request, session: Session = Depends(get_session)):
+        clear_alpaca_market_data_settings()
+        log_user_action(
+            session,
+            action="clear_alpaca_market_data_settings",
+            client_type=ClientType.WEB_UI,
+            method=request.method,
+            path=request.url.path,
+            status=AuditEventStatus.SUCCESS,
+            message="Saved Alpaca market-data settings were cleared.",
+            metadata={
+                "environment_fallback_available": bool(
+                    settings.alpaca_api_key_id or settings.alpaca_api_secret_key
+                )
+            },
+        )
+        return RedirectResponse(
+            url="/settings/market-data/alpaca?notice=Saved+Alpaca+settings+cleared",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     @router.get("/trades/new", response_class=HTMLResponse)
     def new_trade_form(
         request: Request,
@@ -240,16 +361,16 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
         )
 
     @router.get("/holdings/import", response_class=HTMLResponse)
-    def import_holding_form(request: Request, session: Session = Depends(get_session), error: str | None = None):
+    def import_holding_form(
+        request: Request,
+        session: Session = Depends(get_session),
+        error: str | None = None,
+        notice: str | None = None,
+    ):
         return templates.TemplateResponse(
             request=request,
             name="holding_import_form.html",
-            context={
-                "accounts": list_manual_accounts(session),
-                "asset_classes": list(AssetClass),
-                "error": error,
-                "today": date.today().isoformat(),
-            },
+            context=build_holding_import_context(session, error=error, notice=notice),
         )
 
     @router.post("/trades", response_class=HTMLResponse)
@@ -341,7 +462,7 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
         try:
             live_payload = await fetch_live_market_data_from_mcp(request.app, open_targets)
             if live_payload["capabilities"].get("configured") is not True:
-                raise MarketDataError("Live market data is not configured. Set ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY.")
+                raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
             refresh_result = apply_live_market_data_to_open_positions(
                 session,
                 open_targets,
@@ -433,15 +554,63 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             return templates.TemplateResponse(
                 request=request,
                 name="holding_import_form.html",
-                context={
-                    "accounts": list_manual_accounts(session),
-                    "asset_classes": list(AssetClass),
-                    "error": str(exc),
-                    "today": opening_date.isoformat(),
-                },
+                context=build_holding_import_context(session, error=str(exc)),
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         return RedirectResponse(url="/positions", status_code=status.HTTP_303_SEE_OTHER)
+
+    @router.post("/holdings/import/csv", response_class=HTMLResponse)
+    async def create_opening_holdings_from_csv(
+        request: Request,
+        csv_file: UploadFile = File(...),
+        session: Session = Depends(get_session),
+    ):
+        if not csv_file.filename or not csv_file.filename.lower().endswith(".csv"):
+            return templates.TemplateResponse(
+                request=request,
+                name="holding_import_form.html",
+                context=build_holding_import_context(session, error="Please upload a .csv file."),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            csv_bytes = await csv_file.read()
+            result = import_opening_holdings_from_csv(session, csv_bytes)
+        except HoldingImportCsvError as exc:
+            session.rollback()
+            return templates.TemplateResponse(
+                request=request,
+                name="holding_import_form.html",
+                context=build_holding_import_context(session, error=str(exc)),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if result.imported_count == 0 and result.failed_count > 0:
+            return templates.TemplateResponse(
+                request=request,
+                name="holding_import_form.html",
+                context=build_holding_import_context(
+                    session,
+                    error="No holdings were imported. Please review the row errors below.",
+                    bulk_errors=result.row_errors,
+                ),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        notice_parts = [f"Imported {result.imported_count} holding(s) from CSV."]
+        if result.failed_count:
+            notice_parts.append(f"{result.failed_count} row(s) failed.")
+
+        return templates.TemplateResponse(
+            request=request,
+            name="holding_import_form.html",
+            context=build_holding_import_context(
+                session,
+                notice=" ".join(notice_parts),
+                bulk_errors=result.row_errors,
+            ),
+            status_code=status.HTTP_207_MULTI_STATUS if result.failed_count else status.HTTP_200_OK,
+        )
 
     return router

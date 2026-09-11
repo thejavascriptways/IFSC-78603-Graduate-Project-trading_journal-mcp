@@ -310,10 +310,10 @@ flowchart TD
 | 1. Prototype freeze and baseline | Mostly complete | Prototype docs and behavior are preserved |
 | 2. Architecture hardening | Partially complete | MCP modules, providers, route modules, and audit package exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, redaction, and viewer exist |
-| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; richer journal screens pending |
+| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows and bulk holding CSV import exist; richer journal screens pending |
 | 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
 | 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
-| 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path exists; snapshot persistence pending |
+| 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and local Alpaca settings screen exist; snapshot persistence pending |
 | 8. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
 | 9. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
 | 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |

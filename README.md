@@ -143,7 +143,18 @@ python3 -m pip install -e ".[dev]"
 
 ## Optional Market Data Setup
 
-Set Alpaca credentials if you want the market-data page and Market Data MCP server to call Alpaca:
+Use the browser settings screen if you want the market-data page and Market Data MCP server to call Alpaca:
+
+1. Start the app.
+2. Open `Configuration > Alpaca Settings`.
+3. Paste the Alpaca API Key ID and Secret Key.
+4. Keep `iex` and `indicative` for the free/paper-friendly setup, unless your account has paid feed entitlements.
+5. Click `Save Alpaca Settings`.
+6. Open `Portfolio > Market Data` to test live quote retrieval.
+
+The saved settings are written to a local Git-ignored `instance/alpaca_market_data.json` file. The secret is not displayed back in the browser, and audit metadata uses masked/redacted values.
+
+You can still use environment variables instead of the settings screen if you prefer command-line setup:
 
 ```bash
 export ALPACA_API_KEY_ID="your-key-id"
@@ -189,7 +200,7 @@ uvicorn app.main:app
 ## How To Use The Current App
 
 1. Open the dashboard at `http://127.0.0.1:8000/`.
-2. Use **Import Holdings** to manually add existing Fidelity or other manual holdings.
+2. Use **Import Holdings** to add existing Fidelity or other manual holdings one at a time, or bulk import them from CSV.
 3. Use **Add Trade** to manually record buy or sell trades.
 4. Enter a clear trade reason. The app requires this field.
 5. Use **Positions** to review open holdings, update mark prices, refresh market data, or close positions.
@@ -198,6 +209,18 @@ uvicorn app.main:app
 8. Use **MCP Console** to discover MCP servers, call tools, read resources, and render prompts from the browser.
 9. Use **Audit** to inspect recent web/API actions, MCP requests, external API calls, and application events.
 10. Use the MCP demo client to show how external clients discover and call MCP capabilities.
+
+### Bulk Holding CSV Format
+
+The **Import Holdings** page displays this same template. Use these exact headers:
+
+```csv
+account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes
+Manual Fidelity,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,10,500.25,USD,Initial Fidelity import
+Manual Fidelity,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term core position
+```
+
+Supported `asset_class` values are `STOCK`, `ETF`, `MUTUAL_FUND`, `BOND`, `OPTION`, and `CASH`. The `account_name` must match an active manual account, such as `Manual Fidelity`.
 
 ## MCP Endpoints
 

@@ -15,6 +15,7 @@ from app.audit.events import AuditEventStatus
 from app.audit.service import duration_ms_since, log_external_api_call
 from app.config import settings
 from app.models.enums import AssetClass
+from app.services.market_data_settings import get_alpaca_market_data_settings
 from app.services.portfolio import list_closed_positions, list_positions, update_position_market_price
 
 
@@ -28,9 +29,10 @@ class MarketDataError(Exception):
 
 
 def get_market_data_capabilities() -> dict[str, Any]:
-    configured = bool(settings.alpaca_api_key_id and settings.alpaca_api_secret_key)
-    stock_feed = settings.alpaca_stock_feed
-    option_feed = settings.alpaca_option_feed
+    alpaca_settings = get_alpaca_market_data_settings()
+    configured = alpaca_settings.configured
+    stock_feed = alpaca_settings.stock_feed
+    option_feed = alpaca_settings.option_feed
 
     notes = [
         "Stocks and ETFs are fetched from Alpaca Market Data.",
@@ -44,6 +46,8 @@ def get_market_data_capabilities() -> dict[str, Any]:
     return {
         "provider": settings.market_data_provider,
         "configured": configured,
+        "source": alpaca_settings.source,
+        "api_key_id": alpaca_settings.masked_api_key_id,
         "stock_feed": stock_feed,
         "option_feed": option_feed,
         "notes": notes,
@@ -52,15 +56,16 @@ def get_market_data_capabilities() -> dict[str, Any]:
 
 def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
     capabilities = get_market_data_capabilities()
+    alpaca_settings = get_alpaca_market_data_settings()
     if not capabilities["configured"]:
-        raise MarketDataError("Live market data is not configured. Set ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY.")
+        raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
 
     normalized_symbols = _normalize_symbols(symbols)
     if not normalized_symbols:
         return {
             "provider": "alpaca",
             "asset_class": AssetClass.STOCK.value,
-            "feed": settings.alpaca_stock_feed,
+            "feed": alpaca_settings.stock_feed,
             "quotes": [],
             "missing_symbols": [],
         }
@@ -75,7 +80,7 @@ def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
                 "/v2/stocks/snapshots",
                 params={
                     "symbols": ",".join(symbol_chunk),
-                    "feed": settings.alpaca_stock_feed,
+                    "feed": alpaca_settings.stock_feed,
                     "currency": "USD",
                 },
             )
@@ -86,14 +91,14 @@ def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
                 snapshot = snapshots.get(symbol)
                 if snapshot is None:
                     missing_symbols.append(symbol)
-                    quotes.append(_not_found_quote(symbol, AssetClass.STOCK.value, settings.alpaca_stock_feed))
+                    quotes.append(_not_found_quote(symbol, AssetClass.STOCK.value, alpaca_settings.stock_feed))
                     continue
-                quotes.append(_normalize_equity_snapshot(symbol, snapshot, settings.alpaca_stock_feed))
+                quotes.append(_normalize_equity_snapshot(symbol, snapshot, alpaca_settings.stock_feed))
 
     return {
         "provider": "alpaca",
         "asset_class": AssetClass.STOCK.value,
-        "feed": settings.alpaca_stock_feed,
+        "feed": alpaca_settings.stock_feed,
         "quotes": quotes,
         "missing_symbols": missing_symbols,
     }
@@ -101,15 +106,16 @@ def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
 
 def fetch_live_option_snapshots(symbols: list[str]) -> dict[str, Any]:
     capabilities = get_market_data_capabilities()
+    alpaca_settings = get_alpaca_market_data_settings()
     if not capabilities["configured"]:
-        raise MarketDataError("Live market data is not configured. Set ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY.")
+        raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
 
     normalized_symbols = _normalize_symbols(symbols)
     if not normalized_symbols:
         return {
             "provider": "alpaca",
             "asset_class": AssetClass.OPTION.value,
-            "feed": settings.alpaca_option_feed,
+            "feed": alpaca_settings.option_feed,
             "quotes": [],
             "missing_symbols": [],
         }
@@ -124,7 +130,7 @@ def fetch_live_option_snapshots(symbols: list[str]) -> dict[str, Any]:
                 "/v1beta1/options/snapshots",
                 params={
                     "symbols": ",".join(symbol_chunk),
-                    "feed": settings.alpaca_option_feed,
+                    "feed": alpaca_settings.option_feed,
                 },
             )
             payload = response.json()
@@ -134,14 +140,14 @@ def fetch_live_option_snapshots(symbols: list[str]) -> dict[str, Any]:
                 snapshot = snapshots.get(symbol)
                 if snapshot is None:
                     missing_symbols.append(symbol)
-                    quotes.append(_not_found_quote(symbol, AssetClass.OPTION.value, settings.alpaca_option_feed))
+                    quotes.append(_not_found_quote(symbol, AssetClass.OPTION.value, alpaca_settings.option_feed))
                     continue
-                quotes.append(_normalize_option_snapshot(symbol, snapshot, settings.alpaca_option_feed))
+                quotes.append(_normalize_option_snapshot(symbol, snapshot, alpaca_settings.option_feed))
 
     return {
         "provider": "alpaca",
         "asset_class": AssetClass.OPTION.value,
-        "feed": settings.alpaca_option_feed,
+        "feed": alpaca_settings.option_feed,
         "quotes": quotes,
         "missing_symbols": missing_symbols,
     }
@@ -369,11 +375,12 @@ def apply_live_market_data_to_open_positions(
 
 
 def _alpaca_client() -> httpx.Client:
+    alpaca_settings = get_alpaca_market_data_settings()
     return httpx.Client(
-        base_url=settings.alpaca_market_data_base_url,
+        base_url=alpaca_settings.base_url,
         headers={
-            "APCA-API-KEY-ID": settings.alpaca_api_key_id or "",
-            "APCA-API-SECRET-KEY": settings.alpaca_api_secret_key or "",
+            "APCA-API-KEY-ID": alpaca_settings.api_key_id or "",
+            "APCA-API-SECRET-KEY": alpaca_settings.api_secret_key or "",
             "accept": "application/json",
         },
         timeout=settings.market_data_timeout_seconds,

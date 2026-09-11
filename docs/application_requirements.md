@@ -58,6 +58,7 @@ The prototype already includes:
 - Realized and unrealized P&L.
 - Dashboard P&L by total, account, and asset class.
 - Alpaca-backed market-data MCP server for stocks, ETFs, and options where supported.
+- Browser-based Alpaca settings screen for local key entry, feed selection, and masked credential status.
 - Trading Journal MCP server for account, trade, position, summary, resources, and prompts.
 - Internal MCP client behavior from the web app to the market-data MCP server.
 - CLI demo client for MCP discovery and tool calls.
@@ -136,6 +137,9 @@ The application shall allow the user to manually import current holdings from Fi
 The import flow shall support:
 
 - Account selection.
+- Single holding entry from the browser form.
+- Bulk opening holding import from CSV.
+- A visible CSV template with required headers and examples.
 - Symbol.
 - Asset class.
 - Quantity.
@@ -145,7 +149,9 @@ The import flow shall support:
 - Optional notes.
 - Currency.
 
-The import flow shall create an opening transaction and seed the open position. It shall not overwrite existing trade history without user confirmation.
+The bulk CSV format shall include `account_name`, `symbol`, `description`, `asset_class`, `opening_date`, `quantity`, `average_cost`, `currency`, and `notes`.
+
+The import flow shall create an opening transaction and seed the open position. It shall not overwrite existing trade history without user confirmation. Bulk imports shall report row-level validation errors so valid rows can still be imported when other rows fail.
 
 ### 6.4 Manual Trade Journaling
 
@@ -483,6 +489,7 @@ The application shall protect broker credentials and API keys.
 Security requirements:
 
 - Store secrets in environment variables or a local secrets manager, not source code.
+- For the local prototype, allow Git-ignored local credential storage with masked UI display.
 - Never log API keys or broker session tokens.
 - Use HTTPS when communicating with remote broker/provider APIs.
 - Require explicit confirmation for live trading actions.
@@ -693,6 +700,7 @@ flowchart LR
 ### Milestone 3: Market Data MCP Server
 
 - Keep Alpaca provider as one implementation.
+- Add local Alpaca settings UI for credentials and feed selection. `Complete in prototype path.`
 - Add IBKR market-data provider interface.
 - Add quote freshness and entitlement status.
 - Store quote snapshots.
