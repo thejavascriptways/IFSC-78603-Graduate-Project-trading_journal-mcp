@@ -310,7 +310,7 @@ flowchart TD
 | 1. Prototype freeze and baseline | Mostly complete | Prototype docs and behavior are preserved |
 | 2. Architecture hardening | Partially complete | MCP modules, providers, route modules, and audit package exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, redaction, and viewer exist |
-| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows and bulk holding CSV import exist; richer journal screens pending |
+| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows, bulk holding CSV import, and dark theme foundation exist; richer journal screens pending |
 | 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
 | 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
 | 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and local Alpaca settings screen exist; snapshot persistence pending |

@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ title or "Trading Journal" }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v={{ static_asset_version | default('nav-v3') }}" />
-    <script defer src="{{ url_for('static', path='/navigation.js') }}?v={{ static_asset_version | default('nav-v3') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v={{ static_asset_version | default('dark-v1') }}" />
+    <script defer src="{{ url_for('static', path='/navigation.js') }}?v={{ static_asset_version | default('dark-v1') }}"></script>
   </head>
   <body>
     <header class="site-header">

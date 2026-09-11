@@ -18,9 +18,9 @@ This sequence matters because live trading should not be added until the app can
 | Roadmap Area | Status | Current Notes |
 |---|---:|---|
 | 1. Prototype freeze and baseline | Mostly complete | Prototype docs, tests, and accepted behavior are preserved |
-| 2. Architecture hardening | Partially complete | MCP modules, provider modules, route modules, audit package, and local settings structure exist |
+| 2. Architecture hardening | Partially complete | MCP modules, provider modules, route modules, audit package, local settings structure, and responsive navigation exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, external API logs, redaction, and viewer exist |
-| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import is complete in the prototype path |
+| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import and dark theme foundation are complete in the prototype path |
 | 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
 | 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
 | 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and browser-based Alpaca settings screen exist; quote persistence pending |
@@ -191,7 +191,7 @@ Deliverables:
 - Bulk CSV import for opening holdings. `Complete in prototype path.`
 - Post-trade review support.
 - Better P&L reporting and filters.
-- Modern UI refresh with a polished cool/cold theme and consistent design system.
+- Modern UI refresh with a polished cool/cold dark theme and consistent design system. `Theme foundation complete in prototype path.`
 
 Implementation tasks:
 
@@ -205,7 +205,7 @@ Implementation tasks:
 - Add exit reason and lessons learned fields for closed positions.
 - Add filters for trades and positions by account, asset class, symbol, date range, status, and origin.
 - Add CSV export for trades and closed positions.
-- Redesign the UI using a modern cold palette with slate, steel blue, ice gray, teal, and crisp white accents.
+- Redesign the UI using a modern dark cold palette with slate, steel blue, ice gray, teal, and crisp white accents. `Theme foundation complete in prototype path.`
 - Improve financial table styling with sticky headers where useful, aligned numbers, clear gains/losses, and compact scanning.
 - Create reusable styles/components for cards, tables, forms, buttons, badges, alerts, and navigation.
 

@@ -1,14 +1,20 @@
 :root {
-  --bg: #f2ede4;
-  --panel: #fffef8;
-  --ink: #1b1c20;
-  --muted: #676e78;
-  --line: #d8cfbf;
-  --accent: #0e6d5d;
-  --accent-strong: #08473d;
-  --accent-soft: #dff2ee;
-  --warning: #a63b32;
-  --shadow: 0 18px 45px rgba(65, 52, 30, 0.1);
+  --bg: #071018;
+  --panel: #101a24;
+  --panel-strong: #162536;
+  --panel-raised: #1d3042;
+  --ink: #edf6ff;
+  --muted: #99a9ba;
+  --line: #2a3d50;
+  --accent: #2dd4bf;
+  --accent-strong: #8cf7e8;
+  --accent-soft: rgba(45, 212, 191, 0.13);
+  --warning: #fb7185;
+  --warning-soft: rgba(251, 113, 133, 0.14);
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.13);
+  --field: #0c1721;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.36);
 }
 
 * {
@@ -19,13 +25,15 @@ body {
   margin: 0;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(14, 109, 93, 0.12), transparent 28%),
-    linear-gradient(180deg, #faf6ef 0%, var(--bg) 100%);
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.18), transparent 30%),
+    radial-gradient(circle at 85% 10%, rgba(56, 189, 248, 0.12), transparent 28%),
+    linear-gradient(180deg, #091723 0%, var(--bg) 100%);
   color: var(--ink);
+  min-height: 100vh;
 }
 
 a {
-  color: var(--accent-strong);
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -36,7 +44,9 @@ a {
   justify-content: space-between;
   align-items: end;
   padding: 2.5rem 3rem 1.5rem;
-  border-bottom: 1px solid rgba(216, 207, 191, 0.7);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(7, 16, 24, 0.72);
+  backdrop-filter: blur(18px);
 }
 
 .main-nav {
@@ -58,7 +68,7 @@ a {
   color: var(--accent-strong);
   font: inherit;
   font-weight: 700;
-  background: rgba(255, 254, 248, 0.62);
+  background: rgba(16, 26, 36, 0.76);
   cursor: pointer;
 }
 
@@ -66,9 +76,9 @@ a {
 .nav-menu-trigger:hover,
 .nav-menu:focus-within .nav-menu-trigger,
 .nav-menu:hover .nav-menu-trigger {
-  border-color: rgba(14, 109, 93, 0.22);
-  background: var(--panel);
-  box-shadow: 0 12px 24px rgba(65, 52, 30, 0.08);
+  border-color: rgba(45, 212, 191, 0.32);
+  background: var(--panel-strong);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
 }
 
 .nav-menu {
@@ -100,9 +110,9 @@ a {
   min-width: 190px;
   margin-top: 0;
   padding: 0.45rem;
-  border: 1px solid rgba(216, 207, 191, 0.92);
+  border: 1px solid rgba(45, 212, 191, 0.18);
   border-radius: 18px;
-  background: rgba(255, 254, 248, 0.98);
+  background: rgba(11, 24, 35, 0.98);
   box-shadow: var(--shadow);
 }
 
@@ -152,14 +162,16 @@ a {
 
 .card {
   background: var(--panel);
-  border: 1px solid rgba(216, 207, 191, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 24px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
 }
 
 .accent {
-  background: linear-gradient(160deg, var(--accent-soft), #fcfffe);
+  background:
+    linear-gradient(160deg, rgba(45, 212, 191, 0.16), rgba(30, 41, 59, 0.84)),
+    var(--panel-strong);
 }
 
 .eyebrow {
@@ -214,10 +226,10 @@ h1 {
 }
 
 .metric-tile {
-  border: 1px solid rgba(14, 109, 93, 0.14);
+  border: 1px solid rgba(45, 212, 191, 0.18);
   border-radius: 18px;
   padding: 0.9rem;
-  background: rgba(255, 254, 248, 0.72);
+  background: rgba(12, 23, 33, 0.72);
 }
 
 .metric-tile span {
@@ -238,7 +250,7 @@ h1 {
 code {
   padding: 0.12rem 0.4rem;
   border-radius: 999px;
-  background: rgba(14, 109, 93, 0.09);
+  background: var(--accent-soft);
   color: var(--accent-strong);
 }
 
@@ -255,7 +267,7 @@ th,
 td {
   text-align: left;
   padding: 0.8rem 0.55rem;
-  border-bottom: 1px solid rgba(216, 207, 191, 0.8);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
   vertical-align: top;
 }
 
@@ -295,7 +307,13 @@ th {
   border-radius: 14px;
   padding: 0.8rem 0.9rem;
   font: inherit;
-  background: #fff;
+  background: var(--field);
+  color: var(--ink);
+}
+
+.trade-form input::placeholder,
+.trade-form textarea::placeholder {
+  color: #617386;
 }
 
 .full-span {
@@ -319,15 +337,15 @@ th {
 
 .primary-button,
 .primary-link {
-  background: var(--accent);
-  color: white;
+  background: linear-gradient(135deg, var(--accent), #38bdf8);
+  color: #041016;
 }
 
 .secondary-button,
 .secondary-link {
-  background: transparent;
+  background: rgba(16, 26, 36, 0.56);
   color: var(--accent-strong);
-  border: 1px solid rgba(14, 109, 93, 0.25);
+  border: 1px solid rgba(45, 212, 191, 0.28);
 }
 
 .helper-copy {
@@ -339,18 +357,18 @@ th {
   margin-bottom: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
-  background: #fbe7e4;
+  background: var(--warning-soft);
   color: var(--warning);
-  border: 1px solid rgba(166, 59, 50, 0.2);
+  border: 1px solid rgba(251, 113, 133, 0.3);
 }
 
 .notice-banner {
   margin-bottom: 1rem;
   padding: 0.95rem 1rem;
   border-radius: 16px;
-  background: #e6f4ef;
-  color: var(--accent-strong);
-  border: 1px solid rgba(14, 109, 93, 0.18);
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(74, 222, 128, 0.26);
 }
 
 .inline-form {
@@ -365,6 +383,8 @@ th {
   border-radius: 12px;
   padding: 0.6rem 0.75rem;
   font: inherit;
+  background: var(--field);
+  color: var(--ink);
 }
 
 .inline-form .secondary-button {
@@ -377,7 +397,7 @@ th {
   gap: 0.75rem;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(216, 207, 191, 0.8);
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 .console-grid {
@@ -411,7 +431,8 @@ th {
   border-radius: 14px;
   padding: 0.8rem 0.9rem;
   font: inherit;
-  background: #fff;
+  background: var(--field);
+  color: var(--ink);
 }
 
 .console-output {
@@ -419,10 +440,11 @@ th {
   margin: 0;
   border-radius: 18px;
   padding: 1rem;
-  background: #151a18;
-  color: #dff2ee;
+  background: #040b11;
+  color: #d5fff8;
   line-height: 1.5;
   white-space: pre-wrap;
+  border: 1px solid rgba(45, 212, 191, 0.16);
 }
 
 .audit-stack {
@@ -430,7 +452,7 @@ th {
 }
 
 .positive {
-  color: #10704d;
+  color: var(--success);
 }
 
 .negative {
