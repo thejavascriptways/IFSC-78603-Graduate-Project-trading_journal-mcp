@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
 
     application = FastAPI(title=settings.app_name, lifespan=lifespan)
     templates = Jinja2Templates(directory=str(settings.templates_dir))
+    templates.env.globals["static_asset_version"] = settings.static_asset_version
 
     application.add_middleware(AuditMiddleware)
     application.mount("/static", StaticFiles(directory=str(settings.static_dir)), name="static")

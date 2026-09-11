@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ title or "Trading Journal" }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v={{ static_asset_version | default('nav-v3') }}" />
+    <script defer src="{{ url_for('static', path='/navigation.js') }}?v={{ static_asset_version | default('nav-v3') }}"></script>
   </head>
   <body>
     <header class="site-header">
@@ -15,7 +16,7 @@
       <nav class="main-nav" aria-label="Primary navigation">
         <a class="nav-link" href="/">Dashboard</a>
         <div class="nav-menu">
-          <button class="nav-menu-trigger" type="button" aria-haspopup="true">Portfolio</button>
+          <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Portfolio</button>
           <div class="nav-submenu">
             <a href="/positions">Open Positions</a>
             <a href="/positions/closed">Closed Positions</a>
@@ -23,7 +24,7 @@
           </div>
         </div>
         <div class="nav-menu">
-          <button class="nav-menu-trigger" type="button" aria-haspopup="true">Trading</button>
+          <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Trading</button>
           <div class="nav-submenu">
             <a href="/trades/new">Add Trade</a>
             <a href="/trades">Trade History</a>
@@ -31,7 +32,7 @@
           </div>
         </div>
         <div class="nav-menu">
-          <button class="nav-menu-trigger" type="button" aria-haspopup="true">Configuration</button>
+          <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Configuration</button>
           <div class="nav-submenu">
             <a href="/mcp-console">MCP Console</a>
             <a href="/audit">Audit Logs</a>

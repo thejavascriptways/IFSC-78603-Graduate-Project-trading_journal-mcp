@@ -49,6 +49,8 @@ a {
 
 .nav-link,
 .nav-menu-trigger {
+  display: inline-flex;
+  align-items: center;
   min-height: 40px;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -104,6 +106,7 @@ a {
   box-shadow: var(--shadow);
 }
 
+.nav-menu.is-open .nav-submenu,
 .nav-menu:hover .nav-submenu,
 .nav-menu:focus-within .nav-submenu {
   display: grid;
@@ -412,16 +415,30 @@ th {
 
   .main-nav {
     align-items: stretch;
+    flex-direction: column;
     width: 100%;
   }
 
   .nav-menu {
-    position: static;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .nav-menu::after {
+    content: none;
+  }
+
+  .nav-link,
+  .nav-menu-trigger {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .nav-submenu {
-    top: auto;
-    left: 1rem;
+    position: static;
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.35rem;
   }
 
   .content-grid,
