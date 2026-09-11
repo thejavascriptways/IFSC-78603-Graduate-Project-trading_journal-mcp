@@ -286,3 +286,15 @@ def test_browser_mcp_console_page_and_catalog_api_work(app_instance):
         assert {tool["name"] for tool in payload["tools"]}.issuperset(
             {"get_trading_capabilities", "preview_order"}
         )
+
+
+def test_navigation_groups_configuration_links(app_instance):
+    with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Configuration" in response.text
+    assert "MCP Console" in response.text
+    assert "Audit Logs" in response.text
+    assert "Portfolio" in response.text
+    assert "Trading" in response.text

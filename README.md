@@ -27,6 +27,7 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 - Closed positions page with realized P&L.
 - Manual mark-price updates for unrealized P&L.
 - Dashboard P&L tables for overall, account-level, and account plus asset-class reporting.
+- Grouped top navigation for Dashboard, Portfolio, Trading, and Configuration workflows.
 - Market-data page for portfolio symbols.
 - Alpaca-backed market-data integration for supported stocks, ETFs, and options.
 - Trading Journal MCP server.
