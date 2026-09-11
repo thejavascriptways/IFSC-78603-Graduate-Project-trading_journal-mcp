@@ -30,6 +30,8 @@ a {
 }
 
 .site-header {
+  position: relative;
+  z-index: 30;
   display: flex;
   justify-content: space-between;
   align-items: end;
@@ -68,6 +70,7 @@ a {
 }
 
 .nav-menu {
+  display: inline-flex;
   position: relative;
 }
 
@@ -88,11 +91,12 @@ a {
 
 .nav-submenu {
   position: absolute;
-  right: 0;
-  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 40;
   display: none;
   min-width: 190px;
-  margin-top: 0.35rem;
+  margin-top: 0;
   padding: 0.45rem;
   border: 1px solid rgba(216, 207, 191, 0.92);
   border-radius: 18px;
@@ -416,7 +420,7 @@ th {
   }
 
   .nav-submenu {
-    right: auto;
+    top: auto;
     left: 1rem;
   }
 
