@@ -298,3 +298,6 @@ def test_navigation_groups_configuration_links(app_instance):
     assert "Audit Logs" in response.text
     assert "Portfolio" in response.text
     assert "Trading" in response.text
+    assert "Theme" in response.text
+    assert "Dark" in response.text
+    assert "Light" in response.text

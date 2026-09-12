@@ -4,8 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ title or "Trading Journal" }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v={{ static_asset_version | default('dark-v1') }}" />
-    <script defer src="{{ url_for('static', path='/navigation.js') }}?v={{ static_asset_version | default('dark-v1') }}"></script>
+    <script>
+      (function () {
+        try {
+          var savedTheme = localStorage.getItem("trading-journal-theme");
+          document.documentElement.dataset.theme = savedTheme === "light" ? "light" : "dark";
+        } catch (error) {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v={{ static_asset_version | default('theme-toggle-v1') }}" />
+    <script defer src="{{ url_for('static', path='/navigation.js') }}?v={{ static_asset_version | default('theme-toggle-v1') }}"></script>
+    <script defer src="{{ url_for('static', path='/theme.js') }}?v={{ static_asset_version | default('theme-toggle-v1') }}"></script>
   </head>
   <body>
     <header class="site-header">
@@ -13,33 +24,42 @@
         <p class="eyebrow">Portfolio + Journal</p>
         <h1>Trading Journal</h1>
       </div>
-      <nav class="main-nav" aria-label="Primary navigation">
-        <a class="nav-link" href="/">Dashboard</a>
-        <div class="nav-menu">
-          <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Portfolio</button>
-          <div class="nav-submenu">
-            <a href="/positions">Open Positions</a>
-            <a href="/positions/closed">Closed Positions</a>
-            <a href="/market-data">Market Data</a>
+      <div class="header-controls">
+        <label class="theme-switcher" for="theme-select">
+          <span>Theme</span>
+          <select id="theme-select" name="theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <nav class="main-nav" aria-label="Primary navigation">
+          <a class="nav-link" href="/">Dashboard</a>
+          <div class="nav-menu">
+            <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Portfolio</button>
+            <div class="nav-submenu">
+              <a href="/positions">Open Positions</a>
+              <a href="/positions/closed">Closed Positions</a>
+              <a href="/market-data">Market Data</a>
+            </div>
           </div>
-        </div>
-        <div class="nav-menu">
-          <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Trading</button>
-          <div class="nav-submenu">
-            <a href="/trades/new">Add Trade</a>
-            <a href="/trades">Trade History</a>
-            <a href="/holdings/import">Import Holdings</a>
+          <div class="nav-menu">
+            <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Trading</button>
+            <div class="nav-submenu">
+              <a href="/trades/new">Add Trade</a>
+              <a href="/trades">Trade History</a>
+              <a href="/holdings/import">Import Holdings</a>
+            </div>
           </div>
-        </div>
-        <div class="nav-menu">
-          <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Configuration</button>
-          <div class="nav-submenu">
-            <a href="/settings/market-data/alpaca">Alpaca Settings</a>
-            <a href="/mcp-console">MCP Console</a>
-            <a href="/audit">Audit Logs</a>
+          <div class="nav-menu">
+            <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false">Configuration</button>
+            <div class="nav-submenu">
+              <a href="/settings/market-data/alpaca">Alpaca Settings</a>
+              <a href="/mcp-console">MCP Console</a>
+              <a href="/audit">Audit Logs</a>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </div>
     </header>
     <main class="page-shell">
       {% block content %}{% endblock %}

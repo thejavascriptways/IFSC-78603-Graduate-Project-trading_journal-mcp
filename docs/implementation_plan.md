@@ -20,7 +20,7 @@ This sequence matters because live trading should not be added until the app can
 | 1. Prototype freeze and baseline | Mostly complete | Prototype docs, tests, and accepted behavior are preserved |
 | 2. Architecture hardening | Partially complete | MCP modules, provider modules, route modules, audit package, local settings structure, and responsive navigation exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, external API logs, redaction, and viewer exist |
-| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import and dark theme foundation are complete in the prototype path |
+| 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import and user-selectable dark/light themes are complete in the prototype path |
 | 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
 | 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
 | 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and browser-based Alpaca settings screen exist; quote persistence pending |
@@ -191,7 +191,7 @@ Deliverables:
 - Bulk CSV import for opening holdings. `Complete in prototype path.`
 - Post-trade review support.
 - Better P&L reporting and filters.
-- Modern UI refresh with a polished cool/cold dark theme and consistent design system. `Theme foundation complete in prototype path.`
+- Modern UI refresh with a polished cool/cold theme, dark and light modes, and consistent design system. `Dark/light selector complete in prototype path.`
 
 Implementation tasks:
 

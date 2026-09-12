@@ -584,7 +584,7 @@ The application shall be easy to use day to day.
 Usability requirements:
 
 - Clear dashboard.
-- Modern visual design with a polished cool/cold dark color theme, such as slate, steel blue, ice gray, teal, and crisp white accents.
+- Modern visual design with polished cool/cold dark and light theme options, such as slate, steel blue, ice gray, teal, and crisp white accents.
 - Consistent design system for typography, spacing, tables, cards, buttons, forms, alerts, and navigation.
 - High readability for financial tables, including clear positive/negative P&L coloring and strong numeric alignment.
 - Responsive layout that works well on desktop first and remains usable on tablets/mobile.
