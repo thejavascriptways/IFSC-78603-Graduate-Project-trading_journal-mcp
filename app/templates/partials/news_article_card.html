@@ -1,0 +1,18 @@
+<article class="news-card">
+  <div class="news-card-head">
+    <span class="badge">{{ article.symbol }}</span>
+    <span class="muted">{{ article.publisher or "Unknown source" }}</span>
+  </div>
+  <h3>
+    {% if article.url %}
+    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer">{{ article.headline }}</a>
+    {% else %}
+    {{ article.headline }}
+    {% endif %}
+  </h3>
+  <p class="muted">
+    {{ article.published_at or "Date unavailable" }}
+    {% if article.source_country %} | {{ article.source_country }}{% endif %}
+    {% if article.language %} | {{ article.language }}{% endif %}
+  </p>
+</article>

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-grid">
+  <article class="card">
+    <p class="eyebrow">Stock News MCP</p>
+    <h2>Stock News From Around The World</h2>
+    <p class="helper-copy">
+      This page calls the News MCP server to retrieve recent Yahoo Finance demo news for your portfolio symbols.
+      Use the symbol search to look up news for any other stock.
+    </p>
+
+    {% if error %}
+    <div class="error-banner">{{ error }}</div>
+    {% endif %}
+
+    <form class="inline-form" method="get" action="/news">
+      <label>
+        Search symbol
+        <input type="text" name="symbol" value="{{ search_symbol }}" placeholder="AAPL" />
+      </label>
+      <button type="submit" class="secondary-button news-search-action">Search News</button>
+      <a class="secondary-link news-search-action" href="/news">Clear</a>
+    </form>
+  </article>
+
+  <article class="card">
+    <p class="eyebrow">Provider</p>
+    <h3>{{ news_payload.capabilities.provider or "news" }}</h3>
+    <ul class="plain-list">
+      <li>News MCP: <code>{{ news_mcp_url }}</code></li>
+      <li>Configured: {{ "Yes" if news_payload.capabilities.configured else "No" }}</li>
+      <li>Default lookback: <code>{{ news_payload.capabilities.default_timespan or "n/a" }}</code></li>
+    </ul>
+  </article>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Portfolio Feed</p>
+      {% if news_payload.search_symbol %}
+      <h2>News For {{ news_payload.search_symbol }}</h2>
+      {% else %}
+      <h2>News For Current And Closed Positions</h2>
+      {% endif %}
+    </div>
+    {% if news_payload.search_symbol %}
+    <a href="/news" class="secondary-link">Show All Portfolio News</a>
+    {% else %}
+    <a href="/news" class="secondary-link">Refresh News</a>
+    {% endif %}
+  </div>
+
+  {% if news_payload.portfolio_symbols %}
+  <p class="helper-copy portfolio-symbols-line">
+    Portfolio symbols searched:
+    {% for symbol in news_payload.portfolio_symbols %}
+    <a
+      class="symbol-filter-link{% if symbol == news_payload.search_symbol %} is-active{% endif %}"
+      href="/news?symbol={{ symbol }}"
+      aria-label="Show news for {{ symbol }}"
+    >{{ symbol }}</a>{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+  {% else %}
+  <p class="helper-copy">No portfolio symbols are available yet. Add holdings or trades, or use the symbol search above.</p>
+  {% endif %}
+
+  <div class="news-grid">
+    {% for article in news_payload.portfolio_articles %}
+    {% include "partials/news_article_card.html" %}
+    {% else %}
+    <p class="helper-copy">No portfolio news was returned.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

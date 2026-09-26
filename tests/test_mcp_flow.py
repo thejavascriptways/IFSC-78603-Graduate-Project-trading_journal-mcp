@@ -296,8 +296,8 @@ def test_navigation_groups_configuration_links(app_instance):
     assert "Configuration" in response.text
     assert "MCP Console" in response.text
     assert "Audit Logs" in response.text
+    assert "Stock News" in response.text
     assert "Portfolio" in response.text
     assert "Trading" in response.text
-    assert "Theme" in response.text
-    assert "Dark" in response.text
-    assert "Light" in response.text
+    assert "theme-toggle" in response.text
+    assert "theme-select" not in response.text

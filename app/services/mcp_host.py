@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from dataclasses import asdict, dataclass
 from time import perf_counter
 from typing import Any, Awaitable, Callable, TypeVar
@@ -12,6 +13,7 @@ from mcp.client.streamable_http import streamable_http_client
 from app.audit.context import CORRELATION_ID_HEADER, current_correlation_id
 from app.audit.events import AuditEventStatus, ClientType
 from app.audit.service import duration_ms_since, log_mcp_request
+from app.config import settings
 
 
 T = TypeVar("T")
@@ -263,11 +265,13 @@ async def _run_client_operation(
 ) -> T:
     try:
         transport = httpx.ASGITransport(app=app)
+        headers = {CORRELATION_ID_HEADER: current_correlation_id()}
+        headers.update(_demo_access_headers())
         async with httpx.AsyncClient(
             transport=transport,
             base_url="http://127.0.0.1:8000",
             follow_redirects=True,
-            headers={CORRELATION_ID_HEADER: current_correlation_id()},
+            headers=headers,
         ) as http_client:
             async with streamable_http_client(server.url, http_client=http_client) as (read, write, _):
                 async with ClientSession(read, write) as session:
@@ -275,3 +279,12 @@ async def _run_client_operation(
                     return await operation(session)
     except Exception as exc:  # pragma: no cover - exercised via HTTP API integration tests
         raise MCPHostError(f"Could not complete MCP operation against {server.name}.") from exc
+
+
+def _demo_access_headers() -> dict[str, str]:
+    if not settings.demo_password:
+        return {}
+
+    token = f"{settings.demo_username}:{settings.demo_password}".encode("utf-8")
+    encoded = base64.b64encode(token).decode("ascii")
+    return {"Authorization": f"Basic {encoded}"}

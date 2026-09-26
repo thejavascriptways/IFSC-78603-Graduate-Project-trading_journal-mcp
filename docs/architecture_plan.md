@@ -42,7 +42,7 @@ flowchart LR
 
     PORT --> DB["SQLite Database"]
     MKT --> ALPACA["Alpaca Adapter"]
-    NEWS --> DEMO["Demo News Adapter"]
+    NEWS --> YAHOO["Yahoo Finance News Adapter"]
     BROKER --> IBKR["IBKR Adapter Placeholder"]
     ORDERS --> SAFE["Preview-Only Safety Gate"]
     MKT --> AUDIT
@@ -104,6 +104,8 @@ Current provider areas:
 Current adapters:
 
 - `AlpacaMarketDataProvider`
+- `YahooFinanceNewsProvider`
+- `GdeltNewsProvider`
 - `DemoNewsProvider`
 - `IBKRBrokerProvider` placeholder
 
@@ -182,7 +184,7 @@ The app now mounts these MCP endpoints:
 
 The first two are functional prototype servers. The last three are safe architectural scaffolds:
 
-- News MCP uses deterministic demo news data.
+- News MCP uses Yahoo Finance public search results by default for the Phase 1 demo, with GDELT and deterministic demo providers still available for experimentation/offline demos.
 - Broker MCP reports IBKR is not configured yet.
 - Trading MCP supports preview-only architecture and reports live trading disabled.
 
@@ -274,10 +276,10 @@ flowchart LR
     MCP["MCP Server"] --> SVC["Domain Service"]
     SVC --> IFACE["Provider Interface"]
     IFACE --> A["Alpaca Market Data Adapter"]
-    IFACE --> N["Demo News Adapter"]
+    IFACE --> N["Yahoo Finance News Adapter"]
     IFACE --> B["IBKR Broker Placeholder"]
     A --> EXT1["External Market Data API"]
-    N --> EXT2["Deterministic Demo News"]
+    N --> EXT2["Yahoo Finance Public Search"]
     B --> EXT3["Future IBKR Gateway"]
 ```
 
@@ -311,17 +313,19 @@ flowchart TD
 | 2. Architecture hardening | Partially complete | MCP modules, providers, route modules, and audit package exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, redaction, and viewer exist |
 | 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows, bulk holding CSV import, and dark/light theme switching exist; richer journal screens pending |
-| 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
-| 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
+| 5. Watchlist feature | Future idea | Deferred from near-term roadmap |
+| 6. Add/remove stocks from watchlist | Future idea | Deferred from near-term roadmap |
 | 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and local Alpaca settings screen exist; snapshot persistence pending |
-| 8. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
-| 9. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
+| 8. News MCP Server | Partially complete | Yahoo Finance demo provider, News MCP tools, Stock News page, and CLI news commands exist |
+| 9. IBKR Broker MCP Server | Future idea | Status scaffolding exists, but real IBKR sync is deferred |
 | 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
 | 11. Paper trading | Not started | No paper submission yet |
 | 12. Live trading safety gate | Not started | Live trading remains disabled |
 | 13. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
 | 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
 | 15. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
+| 16. Multi-user profiles and user-owned MCP connections | Future idea | Separate portfolio data, credentials, and MCP/provider connections per user |
+| 17. Production-grade news provider | Future idea | Replace unofficial demo news source with an official API-backed provider before production use |
 
 ## 10. Verification
 

@@ -19,7 +19,7 @@ class Settings:
     templates_dir: Path = BASE_DIR / "app" / "templates"
     static_dir: Path = BASE_DIR / "app" / "static"
     local_settings_dir: Path = Path(os.getenv("TRADING_JOURNAL_LOCAL_SETTINGS_DIR", BASE_DIR / "instance"))
-    static_asset_version: str = os.getenv("TRADING_JOURNAL_STATIC_ASSET_VERSION", "theme-toggle-v1")
+    static_asset_version: str = os.getenv("TRADING_JOURNAL_STATIC_ASSET_VERSION", "theme-toggle-v2")
     demo_username: str = os.getenv("TRADING_JOURNAL_DEMO_USERNAME", "demo")
     demo_password: str | None = os.getenv("TRADING_JOURNAL_DEMO_PASSWORD")
     market_data_provider: str = os.getenv("TRADING_JOURNAL_MARKET_DATA_PROVIDER", "alpaca")
@@ -29,6 +29,11 @@ class Settings:
     alpaca_stock_feed: str = os.getenv("ALPACA_STOCK_FEED", "iex")
     alpaca_option_feed: str = os.getenv("ALPACA_OPTION_FEED", "indicative")
     market_data_timeout_seconds: float = float(os.getenv("TRADING_JOURNAL_MARKET_DATA_TIMEOUT_SECONDS", "10"))
+    news_provider: str = os.getenv("TRADING_JOURNAL_NEWS_PROVIDER", "yahoo")
+    yahoo_finance_base_url: str = os.getenv("YAHOO_FINANCE_BASE_URL", "https://query1.finance.yahoo.com")
+    gdelt_doc_base_url: str = os.getenv("GDELT_DOC_BASE_URL", "https://api.gdeltproject.org")
+    gdelt_news_timespan: str = os.getenv("GDELT_NEWS_TIMESPAN", "7d")
+    news_timeout_seconds: float = float(os.getenv("TRADING_JOURNAL_NEWS_TIMEOUT_SECONDS", "10"))
 
 
 settings = Settings()

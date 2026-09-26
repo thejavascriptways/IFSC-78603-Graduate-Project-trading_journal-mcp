@@ -146,6 +146,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Comma-separated stock/ETF symbols to request from the market-data MCP server.",
     )
 
+    stock_news = subparsers.add_parser(
+        "stock-news",
+        help="Request recent global news for one stock symbol from the News MCP server.",
+    )
+    stock_news.add_argument("--symbol", default="AAPL", help="Stock symbol to search for.")
+    stock_news.add_argument("--limit", type=int, default=5, help="Maximum news articles to request.")
+
+    portfolio_news = subparsers.add_parser(
+        "portfolio-news",
+        help="Request recent global news for a comma-separated portfolio symbol list.",
+    )
+    portfolio_news.add_argument(
+        "--symbols",
+        default="AAPL,MSFT",
+        help="Comma-separated stock symbols to request from the News MCP server.",
+    )
+    portfolio_news.add_argument("--limit-per-symbol", type=int, default=3, help="Maximum articles per symbol.")
+
     subparsers.add_parser(
         "client-demo",
         help="Run a complete multi-server demo showing discovery, tools, resources, and prompts.",
@@ -208,6 +226,17 @@ def format_tool_result(result: Any, *, raw: bool) -> None:
         dump_json(result.model_dump(mode="json"))
         return
     dump_json(extract_structured_content(result))
+
+
+def extract_tool_error(result: Any) -> str | None:
+    payload = result.model_dump(mode="json")
+    if not payload.get("isError"):
+        return None
+    content = payload.get("content", [])
+    for item in content:
+        if isinstance(item, dict) and item.get("text"):
+            return str(item["text"])
+    return "MCP tool returned an error."
 
 
 def resolve_target(args: argparse.Namespace, registry: dict[str, MCPServerTarget]) -> MCPServerTarget:
@@ -498,10 +527,104 @@ async def run_market_check(market: MCPServerTarget, symbols: str, *, raw: bool) 
     print("\n\n".join(extract_prompt_messages(payload["health_prompt"])))
 
 
+async def run_stock_news(news: MCPServerTarget, symbol: str, limit: int, *, raw: bool) -> None:
+    normalized_symbol = symbol.strip().upper()
+
+    print_section("MCP Client Workflow: Stock News")
+    print(f"Connecting to {news.name}: {news.url}")
+
+    async def operation(session: ClientSession) -> dict[str, Any]:
+        tools = await session.list_tools()
+        capabilities = await session.call_tool("get_news_capabilities")
+        articles = await session.call_tool(
+            "get_symbol_news",
+            arguments={"symbol": normalized_symbol, "limit": limit},
+        )
+        return {
+            "tools": [tool.name for tool in tools.tools],
+            "capabilities": capabilities,
+            "articles": articles,
+        }
+
+    payload = await connect_and_run(news, operation)
+
+    if raw:
+        dump_json(
+            {
+                "tools": payload["tools"],
+                "capabilities": payload["capabilities"].model_dump(mode="json"),
+                "articles": payload["articles"].model_dump(mode="json"),
+            }
+        )
+        return
+
+    print_section("1. Discovery")
+    print("Tools:", ", ".join(payload["tools"]))
+
+    print_section("2. Tool Call: get_news_capabilities")
+    dump_json(extract_structured_content(payload["capabilities"]))
+
+    print_section(f"3. Tool Call: get_symbol_news for {normalized_symbol}")
+    article_error = extract_tool_error(payload["articles"])
+    if article_error:
+        print(article_error)
+    else:
+        dump_json(extract_structured_content(payload["articles"]))
+
+
+async def run_portfolio_news(news: MCPServerTarget, symbols: str, limit_per_symbol: int, *, raw: bool) -> None:
+    normalized_symbols = [symbol.strip().upper() for symbol in symbols.split(",") if symbol.strip()]
+
+    print_section("MCP Client Workflow: Portfolio News")
+    print(f"Connecting to {news.name}: {news.url}")
+
+    async def operation(session: ClientSession) -> dict[str, Any]:
+        capabilities = await session.call_tool("get_news_capabilities")
+        articles = await session.call_tool(
+            "get_portfolio_news",
+            arguments={"symbols": normalized_symbols, "limit_per_symbol": limit_per_symbol},
+        )
+        review_prompt = await session.get_prompt(
+            "portfolio_news_review",
+            arguments={"symbols": ",".join(normalized_symbols)},
+        )
+        return {
+            "capabilities": capabilities,
+            "articles": articles,
+            "review_prompt": review_prompt,
+        }
+
+    payload = await connect_and_run(news, operation)
+
+    if raw:
+        dump_json(
+            {
+                "capabilities": payload["capabilities"].model_dump(mode="json"),
+                "articles": payload["articles"].model_dump(mode="json"),
+                "review_prompt": payload["review_prompt"].model_dump(mode="json"),
+            }
+        )
+        return
+
+    print_section("1. Tool Call: get_news_capabilities")
+    dump_json(extract_structured_content(payload["capabilities"]))
+
+    print_section("2. Tool Call: get_portfolio_news")
+    article_error = extract_tool_error(payload["articles"])
+    if article_error:
+        print(article_error)
+    else:
+        dump_json(extract_structured_content(payload["articles"]))
+
+    print_section("3. Prompt Render: portfolio_news_review")
+    print("\n\n".join(extract_prompt_messages(payload["review_prompt"])))
+
+
 async def run_client_demo(registry: dict[str, MCPServerTarget], *, raw: bool) -> None:
     explain_mcp_client()
     await run_portfolio_review(registry["journal"], "overall", raw=raw)
     await run_market_check(registry["market"], "AAPL,MSFT", raw=raw)
+    await run_portfolio_news(registry["news"], "AAPL,MSFT", 2, raw=raw)
     for server_id in ("news", "broker", "trading"):
         print_section(f"MCP Client Workflow: Discover {registry[server_id].name}")
         dump_json(await discover(registry[server_id]))
@@ -572,6 +695,14 @@ async def run_client(args: argparse.Namespace) -> None:
 
     if args.command == "market-check":
         await run_market_check(registry["market"], args.symbols, raw=args.raw)
+        return
+
+    if args.command == "stock-news":
+        await run_stock_news(registry["news"], args.symbol, args.limit, raw=args.raw)
+        return
+
+    if args.command == "portfolio-news":
+        await run_portfolio_news(registry["news"], args.symbols, args.limit_per_symbol, raw=args.raw)
         return
 
     if args.command == "client-demo":

@@ -6,8 +6,7 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from app.mcp_servers.security import local_transport_security_settings
-from app.providers.news import DemoNewsProvider
-from app.services.news import NewsService, NewsServiceError
+from app.services.news import NewsService, NewsServiceError, create_default_news_service
 
 
 def _normalize_error(exc: Exception) -> ValueError:
@@ -15,7 +14,7 @@ def _normalize_error(exc: Exception) -> ValueError:
 
 
 def create_news_mcp_server(news_service: NewsService | None = None) -> FastMCP:
-    service = news_service or NewsService(provider=DemoNewsProvider())
+    service = news_service or create_default_news_service()
     news_mcp = FastMCP(
         "Trading Journal News MCP",
         instructions=(

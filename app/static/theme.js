@@ -1,5 +1,5 @@
 (function () {
-  const themeSelect = document.querySelector("#theme-select");
+  const themeToggle = document.querySelector("#theme-toggle");
   const storageKey = "trading-journal-theme";
 
   const normalizeTheme = (theme) => (theme === "light" ? "light" : "dark");
@@ -7,8 +7,11 @@
   const applyTheme = (theme) => {
     const normalizedTheme = normalizeTheme(theme);
     document.documentElement.dataset.theme = normalizedTheme;
-    if (themeSelect) {
-      themeSelect.value = normalizedTheme;
+    if (themeToggle) {
+      const nextTheme = normalizedTheme === "light" ? "dark" : "light";
+      themeToggle.setAttribute("aria-pressed", String(normalizedTheme === "light"));
+      themeToggle.setAttribute("aria-label", `Switch to ${nextTheme} theme`);
+      themeToggle.setAttribute("title", `Switch to ${nextTheme} theme`);
     }
   };
 
@@ -21,8 +24,9 @@
 
   applyTheme(savedTheme);
 
-  themeSelect?.addEventListener("change", (event) => {
-    const nextTheme = normalizeTheme(event.target.value);
+  themeToggle?.addEventListener("click", () => {
+    const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
+    const nextTheme = currentTheme === "light" ? "dark" : "light";
     applyTheme(nextTheme);
     try {
       localStorage.setItem(storageKey, nextTheme);

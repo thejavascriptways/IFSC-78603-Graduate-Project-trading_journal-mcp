@@ -21,17 +21,19 @@ This sequence matters because live trading should not be added until the app can
 | 2. Architecture hardening | Partially complete | MCP modules, provider modules, route modules, audit package, local settings structure, and responsive navigation exist |
 | 3. Full audit logging and observability | Partially complete | Persistent tables, middleware, MCP logs, external API logs, redaction, and viewer exist |
 | 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import and user-selectable dark/light themes are complete in the prototype path |
-| 5. Watchlist feature | Planned | Web watchlist page and persistence pending |
-| 6. Add/remove stocks from watchlist | Planned | Add/remove UI, API, audit, and MCP tools pending |
+| 5. Watchlist feature | Future idea | Deferred from near-term roadmap; web watchlist page and persistence can be revisited later |
+| 6. Add/remove stocks from watchlist | Future idea | Deferred from near-term roadmap; add/remove UI, API, audit, and MCP tools can be revisited later |
 | 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and browser-based Alpaca settings screen exist; quote persistence pending |
-| 8. News MCP Server | Scaffolded only | Demo news provider exists; real news API/UI pending |
-| 9. IBKR Broker MCP Server | Scaffolded only | Status scaffolding exists; real IBKR sync pending |
+| 8. News MCP Server | Partially complete | Yahoo Finance demo provider, News MCP tools, Stock News page, and CLI news commands exist; caching/persistence pending |
+| 9. IBKR Broker MCP Server | Future idea | Status scaffolding exists, but real IBKR sync is deferred from the near-term roadmap |
 | 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
 | 11. Paper trading | Not started | No paper submission yet |
 | 12. Live trading safety gate | Not started | Live trading remains disabled |
 | 13. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
 | 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
 | 15. Deployment readiness | Partially complete | Deployment plan exists; local tunnel professor-demo runbook added; public cloud deployment pending |
+| 16. Multi-user profiles and user-owned MCP connections | Future idea | Allow each user to have separate portfolio data, credentials, and external MCP/provider connections |
+| 17. Production-grade news provider | Future idea | Replace unofficial demo news source with an official API-backed provider before production use |
 
 ## 2. Target Architecture
 
@@ -217,9 +219,14 @@ Acceptance criteria:
 - Dashboard tables support the required account/account-type/asset-class breakdowns.
 - UI feels modern, consistent, readable, and suitable for daily trading review.
 
-## 7. Phase 3A: Watchlist Core
+## 7. Phase 3A: Watchlist Core Future Idea
 
 Goal: add a day-to-day watchlist workflow for tracking symbols before they become trades or portfolio positions.
+
+Current status:
+
+- Deferred as a future idea.
+- Do not implement during the immediate roadmap unless the project scope is explicitly changed.
 
 MCP design decision:
 
@@ -297,40 +304,56 @@ Goal: add stock news and make it visible both in the UI and through MCP.
 
 Deliverables:
 
-- News provider interface.
-- First news provider implementation.
-- Symbol news page.
-- Portfolio news page.
-- News MCP server.
+- News provider interface. `Complete.`
+- First news provider implementation. `Complete: Yahoo Finance demo provider added; GDELT and demo providers remain available.`
+- Symbol news page. `Partially complete: /news supports ad hoc symbol search.`
+- Portfolio news page. `Partially complete: /news shows news for current and closed position symbols.`
+- News MCP server. `Complete for current tools.`
 - News caching and audit logs.
+- CLI news commands. `Complete: stock-news and portfolio-news commands added.`
 
 Recommended V1 provider:
 
-- Start with Finnhub or Alpha Vantage if the user wants a simpler free-tier setup.
+- Start with Yahoo Finance public search results for the Phase 1 class demo.
+- Treat Yahoo Finance as an unofficial demo source, not the final production source.
+- Consider Finnhub or Alpha Vantage if the user wants a finance-specific free-tier setup later.
 - Use Polygon if the user already has or wants a richer market-data/news provider.
+
+Production follow-up:
+
+- Add a production-grade official news provider before using this feature outside demos.
+- Evaluate official API options such as Finnhub, Alpha Vantage, Polygon, Benzinga, or another licensed provider.
+- Add provider keys through secure settings, caching, rate-limit handling, and source attribution.
+- Keep Yahoo Finance as demo-only unless a stable official access path is selected.
 
 Implementation tasks:
 
-- Define `NewsProvider` interface.
-- Add provider config and API key handling.
+- Define `NewsProvider` interface. `Complete.`
+- Add provider config and API key handling. `Partially complete: Yahoo demo provider does not require an API key.`
 - Add `NewsArticle` model.
-- Add `/news` portfolio news page.
-- Add `/news/{symbol}` symbol detail page.
-- Add tools: `get_news_capabilities`, `get_symbol_news`, `get_portfolio_news`, `get_news_sentiment`.
+- Add `/news` portfolio news page. `Partially complete.`
+- Add `/news/{symbol}` symbol detail page. `Deferred; /news?symbol=... handles symbol search first.`
+- Add tools: `get_news_capabilities`, `get_symbol_news`, `get_portfolio_news`, `get_news_sentiment`. `First three complete; sentiment pending.`
 - Add resources: `news://portfolio`, `news://symbol/{symbol}`.
-- Add prompt: `portfolio_news_review`.
+- Add prompt: `portfolio_news_review`. `Complete.`
 - Add caching to avoid repeated provider calls.
 
 Acceptance criteria:
 
-- User can view latest news for open positions.
-- User can view news for a selected symbol.
-- MCP client can retrieve news through News MCP.
-- News API failures are logged and displayed clearly.
+- User can view latest news for open and closed position symbols. `Complete in /news.`
+- User can view news for a selected symbol. `Complete in /news search.`
+- MCP client can retrieve news through News MCP. `Complete.`
+- News API failures are logged and displayed clearly. `Partially complete: external calls are logged and page errors display.`
 
-## 10. Phase 6: Broker MCP Server for IBKR Sync
+## 10. Phase 6: Broker MCP Server for IBKR Sync Future Idea
 
 Goal: connect to IBKR for read-only broker data before allowing any trading.
+
+Current status:
+
+- Deferred as a future idea.
+- Keep the current safe Broker MCP status scaffold available for architecture demos.
+- Do not implement real IBKR sync during the immediate roadmap unless the project scope is explicitly changed.
 
 Deliverables:
 
@@ -553,7 +576,44 @@ Acceptance criteria:
 - Trading actions remain confirmation-gated.
 - Database can be backed up and restored.
 
-## 17. Cross-Cutting Testing Plan
+## 17. Phase 13: Multi-User Profiles And User-Owned MCP Connections
+
+Goal: evolve the app from a single local/demo profile into a multi-user application where each user owns separate portfolio data, broker/provider credentials, and optional external MCP connections.
+
+Current design note:
+
+- Today, all users who access the same running app instance share the same database, Alpaca settings, audit logs, and MCP/provider configuration.
+- This phase is a future idea only. No implementation should begin until authentication, authorization, and secure secret storage are planned.
+
+Deliverables:
+
+- User login and user profile ownership.
+- Per-user portfolios, trades, holdings, watchlists, and audit visibility.
+- Per-user market-data and broker credentials.
+- Configuration screen for user-owned external MCP server connections.
+- Ability for a user to register, test, enable, disable, and remove external MCP server URLs.
+- Secure storage for API keys, broker credentials, and MCP access tokens.
+- Access-control checks so one user cannot view or call another user's data or MCP connections.
+
+Implementation tasks:
+
+- Add user/account ownership models.
+- Associate accounts, trades, positions, watchlists, settings, and audit records with a user.
+- Add secure credential storage strategy before accepting user secrets.
+- Add `Configuration > MCP Connections` screen.
+- Add provider/MCP connection validation flow.
+- Add per-user MCP routing so calls use the active user's configured connection.
+- Add admin/demo controls for professor review without exposing personal data.
+
+Acceptance criteria:
+
+- User A and User B can use the same hosted app without sharing portfolio data.
+- Each user can add their own provider credentials or external MCP server connection.
+- MCP calls execute only against the current user's authorized data and configured connections.
+- Secrets are never displayed back in plain text and are redacted in audit logs.
+- Shared demo mode remains available for professor review.
+
+## 18. Cross-Cutting Testing Plan
 
 Every phase should include tests.
 
@@ -581,7 +641,7 @@ Testing rule:
 - Real provider calls should be limited to manual integration tests.
 - Live trading must never run in automated tests.
 
-## 18. Risk Management
+## 19. Risk Management
 
 Major risks and mitigations:
 
@@ -592,9 +652,10 @@ Major risks and mitigations:
 - Database migration risk: add migrations before heavy model changes.
 - MCP complexity: keep each MCP server focused and provide a browser-based learning console.
 - MCP server sprawl: keep watchlist in Trading Journal MCP first, then split only if the watchlist domain becomes independently complex.
+- Multi-user data isolation: do not add shared hosted usage until ownership and authorization checks are tested.
 - Sensitive log data: enforce redaction before saving audit records.
 
-## 19. Recommended Immediate Next Step
+## 20. Recommended Immediate Next Step
 
 The next implementation step should continue **Phase 2 audit logging and observability**:
 

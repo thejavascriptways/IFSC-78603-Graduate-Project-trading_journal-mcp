@@ -32,7 +32,8 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 - Alpaca-backed market-data integration for supported stocks, ETFs, and options.
 - Trading Journal MCP server.
 - Market Data MCP server.
-- Safe News MCP, Broker MCP, and Trading MCP scaffolding for future phases.
+- Yahoo Finance-backed News MCP server for demo stock-news lookup.
+- Safe Broker MCP and Trading MCP scaffolding for future phases.
 - Internal MCP client calls from the web app to the Market Data MCP server.
 - External command-line MCP demo client.
 - Persistent audit logging foundation with correlation IDs, redaction, and an audit viewer.
@@ -56,7 +57,7 @@ flowchart LR
 
     PMCP --> DB
     MMCP --> ALPACA["Alpaca Market Data API"]
-    NMCP --> DEMO["Demo News Provider"]
+    NMCP --> YAHOO["Yahoo Finance Demo News Provider"]
     BMCP --> IBKR["IBKR Placeholder"]
     TMCP --> SAFE["Preview-Only Safety Gate"]
     HOST --> AUDIT
@@ -224,9 +225,10 @@ Only share the tunnel URL and temporary demo password during the demo, and stop 
 5. Use **Positions** to review open holdings, update mark prices, refresh market data, or close positions.
 6. Use **Closed Positions** to review realized P&L after a position is fully closed.
 7. Use **Market Data** to view quote data and provider status for portfolio symbols.
-8. Use **MCP Console** to discover MCP servers, call tools, read resources, and render prompts from the browser.
-9. Use **Audit** to inspect recent web/API actions, MCP requests, external API calls, and application events.
-10. Use the MCP demo client to show how external clients discover and call MCP capabilities.
+8. Use **Stock News** to view global news for portfolio symbols or search any symbol.
+9. Use **MCP Console** to discover MCP servers, call tools, read resources, and render prompts from the browser.
+10. Use **Audit** to inspect recent web/API actions, MCP requests, external API calls, and application events.
+11. Use the MCP demo client to show how external clients discover and call MCP capabilities.
 
 ### Bulk Holding CSV Format
 
@@ -323,7 +325,7 @@ Current prompts:
 
 - `portfolio_news_review`
 
-This server currently uses deterministic demo news data so the architecture can be demonstrated before a real news provider is selected.
+This server uses Yahoo Finance public search results by default for Phase 1 demo stock-news lookup. Set `TRADING_JOURNAL_NEWS_PROVIDER=demo` if you want deterministic synthetic news for offline demos, or `TRADING_JOURNAL_NEWS_PROVIDER=gdelt` to try the GDELT provider.
 
 ### Broker MCP Server
 
@@ -417,6 +419,14 @@ python3 scripts/mcp_demo_client.py --server trading discover
 python3 scripts/mcp_demo_client.py --server trading call get_trading_capabilities
 ```
 
+Call stock-news tools:
+
+```bash
+python3 scripts/mcp_demo_client.py stock-news --symbol AAPL
+python3 scripts/mcp_demo_client.py portfolio-news --symbols AAPL,MSFT
+python3 scripts/mcp_demo_client.py --server news call get_symbol_news --arguments '{"symbol":"AAPL","limit":5}'
+```
+
 Call market-data tools:
 
 ```bash
@@ -469,7 +479,8 @@ The tests cover:
 - Dashboard P&L summaries.
 - Trading Journal MCP discovery and tool calls.
 - Market Data MCP discovery and capability calls.
-- News, Broker, and Trading MCP scaffold discovery.
+- News MCP discovery and mocked stock-news calls.
+- Broker and Trading MCP scaffold discovery.
 - Trading MCP live-trading-disabled safety signal.
 - Browser MCP Console route and catalog API.
 - Audit correlation IDs, persistent MCP logs, and secret redaction.

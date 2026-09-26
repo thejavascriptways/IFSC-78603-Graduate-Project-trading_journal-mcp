@@ -34,7 +34,8 @@ from app.services.market_data import (
     build_portfolio_market_data_targets,
     fetch_live_market_data_from_mcp,
 )
-from app.services.mcp_host import list_registered_mcp_servers
+from app.services.mcp_host import MCPHostError, list_registered_mcp_servers
+from app.services.news import NewsServiceError, build_portfolio_news_symbols, fetch_news_from_mcp
 from app.services.portfolio import (
     PortfolioError,
     get_dashboard_data,
@@ -227,6 +228,43 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
                 "capabilities": capabilities,
                 "market_data_mcp_url": "/market-data-mcp/",
                 "trading_journal_mcp_url": "/mcp/",
+            },
+        )
+
+    @router.get("/news", response_class=HTMLResponse)
+    async def news_page(
+        request: Request,
+        session: Session = Depends(get_session),
+        symbol: str | None = None,
+    ):
+        portfolio_symbols = build_portfolio_news_symbols(session)
+        news_payload = {
+            "capabilities": {"provider": settings.news_provider, "configured": False},
+            "portfolio_symbols": portfolio_symbols,
+            "portfolio_articles": [],
+            "search_symbol": (symbol or "").strip().upper(),
+            "search_articles": [],
+        }
+        error_message = None
+
+        try:
+            news_payload = await fetch_news_from_mcp(
+                request.app,
+                portfolio_symbols,
+                search_symbol=symbol,
+                limit_per_symbol=3,
+            )
+        except (NewsServiceError, MCPHostError) as exc:
+            error_message = str(exc)
+
+        return templates.TemplateResponse(
+            request=request,
+            name="news.html",
+            context={
+                "error": error_message,
+                "news_payload": news_payload,
+                "news_mcp_url": "/news-mcp/",
+                "search_symbol": (symbol or "").strip().upper(),
             },
         )
 
