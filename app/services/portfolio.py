@@ -14,6 +14,8 @@ from app.schemas import ManualTradeCreate, OpeningHoldingCreate
 
 
 ZERO = Decimal("0")
+MANUAL_ENTRY_ACCOUNT_NAME = "Manual Entry"
+LEGACY_MANUAL_ACCOUNT_NAME = "Manual Fidelity"
 
 
 class PortfolioError(Exception):
@@ -36,6 +38,12 @@ InstrumentPayload = ManualTradeCreate | OpeningHoldingCreate
 
 
 def seed_default_accounts(session: Session) -> None:
+    legacy_manual_account = session.scalar(select(Account).where(Account.name == LEGACY_MANUAL_ACCOUNT_NAME))
+    current_manual_account = session.scalar(select(Account).where(Account.name == MANUAL_ENTRY_ACCOUNT_NAME))
+    if legacy_manual_account and current_manual_account is None:
+        legacy_manual_account.name = MANUAL_ENTRY_ACCOUNT_NAME
+        session.commit()
+
     defaults = [
         {
             "name": "IBKR Live",
@@ -44,7 +52,7 @@ def seed_default_accounts(session: Session) -> None:
             "sync_enabled": True,
         },
         {
-            "name": "Manual Fidelity",
+            "name": MANUAL_ENTRY_ACCOUNT_NAME,
             "source": AccountSource.MANUAL,
             "account_number": None,
             "sync_enabled": False,

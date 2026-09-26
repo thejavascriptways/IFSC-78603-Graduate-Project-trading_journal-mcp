@@ -18,7 +18,7 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 
 - FastAPI backend with server-rendered HTML pages.
 - SQLite-backed local database.
-- Default accounts for `IBKR Live` and `Manual Fidelity`.
+- Default accounts for `IBKR Live` and `Manual Entry`.
 - Manual import flow for existing holdings.
 - Manual buy/sell trade entry.
 - Required trade reason field for every manual trade.
@@ -236,11 +236,11 @@ The **Import Holdings** page displays this same template. Use these exact header
 
 ```csv
 account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes
-Manual Fidelity,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,10,500.25,USD,Initial Fidelity import
-Manual Fidelity,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term core position
+Manual Entry,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,10,500.25,USD,Initial Fidelity import
+Manual Entry,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term core position
 ```
 
-Supported `asset_class` values are `STOCK`, `ETF`, `MUTUAL_FUND`, `BOND`, `OPTION`, and `CASH`. The `account_name` must match an active manual account, such as `Manual Fidelity`.
+Supported `asset_class` values are `STOCK`, `ETF`, `MUTUAL_FUND`, `BOND`, `OPTION`, and `CASH`. The `account_name` must match an active manual account, such as `Manual Entry`.
 
 ## MCP Endpoints
 

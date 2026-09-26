@@ -10,12 +10,13 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from sqlalchemy.orm import Session
 
-from app.audit.context import CORRELATION_ID_HEADER, current_correlation_id
+from app.audit.context import current_correlation_id
 from app.audit.events import AuditEventStatus
 from app.audit.service import duration_ms_since, log_external_api_call
 from app.config import settings
 from app.models.enums import AssetClass
 from app.services.market_data_settings import get_alpaca_market_data_settings
+from app.services.mcp_host import build_internal_mcp_headers
 from app.services.portfolio import list_closed_positions, list_positions, update_position_market_price
 
 
@@ -221,7 +222,7 @@ async def fetch_live_market_data_from_mcp(app: FastAPI, targets: list[dict[str, 
             base_url="http://127.0.0.1:8000",
             follow_redirects=True,
             timeout=settings.market_data_timeout_seconds,
-            headers={CORRELATION_ID_HEADER: current_correlation_id()},
+            headers=build_internal_mcp_headers(),
         ) as http_client:
             async with streamable_http_client(
                 "http://127.0.0.1:8000/market-data-mcp/",

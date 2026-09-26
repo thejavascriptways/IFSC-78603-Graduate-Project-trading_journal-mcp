@@ -12,7 +12,7 @@ def test_mcp_server_exposes_tools_resources_and_portfolio_state(app_instance):
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         accounts_response = client.get("/api/accounts")
         accounts = accounts_response.json()
-        manual_account = next(account for account in accounts if account["name"] == "Manual Fidelity")
+        manual_account = next(account for account in accounts if account["name"] == "Manual Entry")
 
         import_response = client.post(
             "/api/opening-holdings",

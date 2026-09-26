@@ -31,8 +31,8 @@ OPENING_HOLDING_CSV_FIELDS = [
 OPENING_HOLDING_SAMPLE_CSV = (
     ",".join(OPENING_HOLDING_CSV_FIELDS)
     + "\n"
-    + "Manual Fidelity,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,10,500.25,USD,Initial Fidelity import\n"
-    + "Manual Fidelity,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term core position\n"
+    + "Manual Entry,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,10,500.25,USD,Initial Fidelity import\n"
+    + "Manual Entry,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term core position\n"
 )
 
 

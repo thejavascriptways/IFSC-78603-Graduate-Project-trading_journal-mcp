@@ -88,7 +88,7 @@ Current enum coverage:
 
 The prototype supports:
 
-- Default account seeding for `IBKR Live` and `Manual Fidelity`.
+- Default account seeding for `IBKR Live` and `Manual Entry`.
 - Manual opening holding import.
 - Manual buy trade entry.
 - Manual sell trade entry.

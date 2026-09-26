@@ -613,7 +613,7 @@ def build_docx(diagrams: dict[str, Path]) -> None:
     )
     add_paragraph(
         doc,
-        "The prototype currently runs as a local-first web application. It includes a database-backed portfolio model with accounts, instruments, trades, and positions. Two default account types have been created: an IBKR Live account to represent a future broker-connected account and a Manual Fidelity account to support manual import of holdings. This allows the prototype to support the initial use case where existing Fidelity holdings can be entered manually before automated brokerage synchronization is added later.",
+        "The prototype currently runs as a local-first web application. It includes a database-backed portfolio model with accounts, instruments, trades, and positions. Two default account types have been created: an IBKR Live account to represent a future broker-connected account and a Manual Entry account to support manual import of holdings. This allows the prototype to support the initial use case where existing Fidelity holdings can be entered manually before automated brokerage synchronization is added later.",
     )
     add_paragraph(
         doc,
@@ -1005,7 +1005,7 @@ def build_pdf(diagrams: dict[str, Path]) -> None:
     story.append(pp("Preliminary Work Completed", styles["h1"]))
     for text in [
         "A working prototype has already been developed to validate the main technical direction of the project. The prototype is built using Python, FastAPI, SQLAlchemy, SQLite, Jinja templates, and MCP. The purpose of this early work was not to complete the production application, but to prove that the core ideas are feasible: portfolio tracking, trade journaling, profit/loss calculation, live market-data integration, and MCP-based communication between clients and servers.",
-        "The prototype currently runs as a local-first web application. It includes a database-backed portfolio model with accounts, instruments, trades, and positions. Two default account types have been created: an IBKR Live account to represent a future broker-connected account and a Manual Fidelity account to support manual import of holdings.",
+        "The prototype currently runs as a local-first web application. It includes a database-backed portfolio model with accounts, instruments, trades, and positions. Two default account types have been created: an IBKR Live account to represent a future broker-connected account and a Manual Entry account to support manual import of holdings.",
         "A manual holding import workflow has been implemented. This allows a user to enter existing positions into the system with account, symbol, asset class, quantity, average cost, opening date, description, and notes. The trade-entry workflow includes a required reason for trade, making the application a journal as well as a tracker.",
         "Position tracking and P&L calculations have also been implemented. The application maintains open positions using average-cost accounting. Buy trades increase position quantity and update average cost. Sell trades reduce quantity and calculate realized P&L. If a sell trade closes the full position, the position is moved from open positions to closed position history.",
         "The current web interface includes pages for the dashboard, trades, open positions, closed positions, opening holding import, manual trade entry, and market data. The dashboard reports overall performance, account-level performance, and account plus asset-class performance.",

@@ -187,7 +187,7 @@ def create_mcp_server() -> FastMCP:
         name="journal_follow_up",
         description="Create a prompt for reviewing recent trades and missing journal context.",
     )
-    def journal_follow_up_prompt(account_name: str = "Manual Fidelity") -> str:
+    def journal_follow_up_prompt(account_name: str = "Manual Entry") -> str:
         """Build a reusable prompt for trade-journal follow-up."""
         with session_scope() as session:
             trades = [serialize_trade(trade) for trade in list_trades(session)[:10]]

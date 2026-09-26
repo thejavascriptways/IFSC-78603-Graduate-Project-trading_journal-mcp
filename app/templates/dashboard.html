@@ -6,15 +6,50 @@
     <h2>{{ accounts|length }}</h2>
     <ul class="plain-list">
       {% for account in accounts %}
-      <li>{{ account.name }} · {{ account.source.value }}</li>
+      {% if account.name == "Manual Entry" %}
+      <li>{{ account.name }}</li>
+      {% endif %}
+      {% endfor %}
+      {% for account in accounts %}
+      {% if account.name != "Manual Entry" %}
+      <li>{{ account.name }}</li>
+      {% endif %}
       {% endfor %}
     </ul>
   </article>
-  <article class="card">
+  <article class="card open-position-card" tabindex="0" aria-describedby="open-positions-popover">
     <p class="eyebrow">Open Positions</p>
     <h2>{{ portfolio_summary.open_position_count }}</h2>
     <p>Total cost basis: ${{ "%.2f"|format(total_cost_basis) }}</p>
     <p>Total market value: ${{ "%.2f"|format(portfolio_summary.total_market_value|float) }}</p>
+    <div id="open-positions-popover" class="open-positions-popover" role="tooltip">
+      <div class="popover-head">
+        <span>Open Positions</span>
+        <a href="/positions">Manage</a>
+      </div>
+      <div class="popover-scroll">
+        {% for position in open_positions %}
+        <div class="position-popover-row">
+          <div>
+            <strong>{{ position.instrument.symbol }}</strong>
+            <span>{{ position.account.name }} · {{ position.instrument.asset_class.value }}</span>
+          </div>
+          <div class="position-popover-metrics">
+            <span>{{ "%.4f"|format(position.quantity|float) }} sh</span>
+            <span>
+              {% if position.market_value %}
+              ${{ "%.2f"|format(position.market_value|float) }}
+              {% else %}
+              -
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        {% else %}
+        <p class="helper-copy">No open positions yet.</p>
+        {% endfor %}
+      </div>
+    </div>
   </article>
   <article class="card accent">
     <p class="eyebrow">P&L Snapshot</p>

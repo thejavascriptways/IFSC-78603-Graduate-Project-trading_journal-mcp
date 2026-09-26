@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from app.config import settings
 from app.services.market_data import fetch_live_equity_snapshots
+
 
 def test_manual_trade_updates_position_and_requires_reason(app_instance):
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         accounts_response = client.get("/api/accounts")
         accounts = accounts_response.json()
-        manual_account = next(account for account in accounts if account["name"] == "Manual Fidelity")
+        manual_account = next(account for account in accounts if account["name"] == "Manual Entry")
 
         trade_response = client.post(
             "/api/trades",
@@ -31,7 +33,7 @@ def test_manual_trade_updates_position_and_requires_reason(app_instance):
         positions_response = client.get("/api/positions")
         positions = positions_response.json()
         assert len(positions) == 1
-        assert positions[0]["account_name"] == "Manual Fidelity"
+        assert positions[0]["account_name"] == "Manual Entry"
         assert positions[0]["symbol"] == "VTI"
         assert positions[0]["asset_class"] == "ETF"
         assert positions[0]["description"] == "Vanguard Total Stock Market ETF"
@@ -60,7 +62,7 @@ def test_opening_holding_import_seeds_position_and_supports_future_trades(app_in
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         accounts_response = client.get("/api/accounts")
         accounts = accounts_response.json()
-        manual_account = next(account for account in accounts if account["name"] == "Manual Fidelity")
+        manual_account = next(account for account in accounts if account["name"] == "Manual Entry")
 
         import_response = client.post(
             "/api/opening-holdings",
@@ -113,7 +115,7 @@ def test_opening_holding_import_seeds_position_and_supports_future_trades(app_in
         positions_response = client.get("/api/positions")
         positions = positions_response.json()
         assert len(positions) == 1
-        assert positions[0]["account_name"] == "Manual Fidelity"
+        assert positions[0]["account_name"] == "Manual Entry"
         assert positions[0]["symbol"] == "VOO"
         assert positions[0]["asset_class"] == "ETF"
         assert positions[0]["description"] == "Vanguard S&P 500 ETF"
@@ -137,8 +139,8 @@ def test_holding_import_page_supports_bulk_csv_import(app_instance):
 
         csv_content = (
             "account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes\n"
-            "Manual Fidelity,VTI,Vanguard Total Stock Market ETF,ETF,2026-01-02,10,250.50,USD,Core allocation\n"
-            "Manual Fidelity,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term position\n"
+            "Manual Entry,VTI,Vanguard Total Stock Market ETF,ETF,2026-01-02,10,250.50,USD,Core allocation\n"
+            "Manual Entry,AAPL,Apple Inc.,STOCK,2026-02-15,5,180.10,USD,Long-term position\n"
         )
 
         import_response = client.post(
@@ -160,8 +162,8 @@ def test_holding_bulk_csv_import_reports_row_errors(app_instance):
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         csv_content = (
             "account_name,symbol,description,asset_class,opening_date,quantity,average_cost,currency,notes\n"
-            "Manual Fidelity,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,3,500,USD,Valid row\n"
-            "Manual Fidelity,BAD,Bad Asset,INVALID,2026-01-02,2,10,USD,Invalid row\n"
+            "Manual Entry,VOO,Vanguard S&P 500 ETF,ETF,2026-01-02,3,500,USD,Valid row\n"
+            "Manual Entry,BAD,Bad Asset,INVALID,2026-01-02,2,10,USD,Invalid row\n"
         )
 
         import_response = client.post(
@@ -193,7 +195,7 @@ def test_mark_price_updates_unrealized_pnl_and_full_close_moves_position_to_clos
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         accounts_response = client.get("/api/accounts")
         accounts = accounts_response.json()
-        manual_account = next(account for account in accounts if account["name"] == "Manual Fidelity")
+        manual_account = next(account for account in accounts if account["name"] == "Manual Entry")
 
         import_response = client.post(
             "/api/opening-holdings",
@@ -262,7 +264,7 @@ def test_dashboard_summary_reports_overall_account_and_account_asset_class_pnl(a
         manual_account = next(
             account
             for account in client.get("/api/accounts").json()
-            if account["name"] == "Manual Fidelity"
+            if account["name"] == "Manual Entry"
         )
 
         client.post(
@@ -330,7 +332,7 @@ def test_dashboard_summary_reports_overall_account_and_account_asset_class_pnl(a
 
         by_account = summary["performance_by_account"]
         assert len(by_account) == 1
-        assert by_account[0]["account_name"] == "Manual Fidelity"
+        assert by_account[0]["account_name"] == "Manual Entry"
         assert by_account[0]["total_pnl"] == "200.000000"
 
         by_account_asset_class = summary["performance_by_account_asset_class"]
@@ -341,6 +343,14 @@ def test_dashboard_summary_reports_overall_account_and_account_asset_class_pnl(a
         assert bond_row["total_pct"] == "-10.0000"
         assert etf_row["total_pnl"] == "300.000000"
         assert etf_row["total_pct"] == "30.0000"
+
+        dashboard = client.get("/")
+        assert dashboard.status_code == 200
+        assert "open-positions-popover" in dashboard.text
+        assert "position-popover-row" in dashboard.text
+        assert dashboard.text.index("<li>Manual Entry</li>") < dashboard.text.index("<li>IBKR Live</li>")
+        assert "VOO" in dashboard.text
+        assert "UST10Y" in dashboard.text
 
 
 def test_live_market_data_page_and_refresh_via_mcp_updates_open_positions(app_instance, monkeypatch):
@@ -395,7 +405,7 @@ def test_live_market_data_page_and_refresh_via_mcp_updates_open_positions(app_in
         manual_account = next(
             account
             for account in client.get("/api/accounts").json()
-            if account["name"] == "Manual Fidelity"
+            if account["name"] == "Manual Entry"
         )
 
         import_response = client.post(
@@ -465,6 +475,51 @@ def test_live_market_data_page_and_refresh_via_mcp_updates_open_positions(app_in
         assert positions[0]["market_price"] == "125.500000"
         assert positions[0]["market_value"] == "627.500000"
         assert positions[0]["unrealized_pnl"] == "127.500000"
+
+
+def test_live_market_data_page_uses_demo_auth_for_internal_mcp_calls(app_instance, monkeypatch):
+    monkeypatch.setattr(
+        "app.market_data_mcp.get_market_data_capabilities",
+        lambda: {
+            "provider": "alpaca",
+            "configured": True,
+            "stock_feed": "iex",
+            "option_feed": "indicative",
+            "notes": ["Stocks and ETFs are fetched from Alpaca Market Data."],
+        },
+    )
+    monkeypatch.setattr(
+        "app.market_data_mcp.fetch_live_equity_snapshots",
+        lambda symbols: {
+            "provider": "alpaca",
+            "asset_class": "STOCK",
+            "feed": "iex",
+            "quotes": [],
+            "missing_symbols": [],
+        },
+    )
+    monkeypatch.setattr(
+        "app.market_data_mcp.fetch_live_option_snapshots",
+        lambda symbols: {
+            "provider": "alpaca",
+            "asset_class": "OPTION",
+            "feed": "indicative",
+            "quotes": [],
+            "missing_symbols": [],
+        },
+    )
+
+    original_demo_password = settings.demo_password
+    object.__setattr__(settings, "demo_password", "demo")
+    try:
+        with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
+            market_data_page = client.get("/market-data", auth=("demo", "demo"))
+    finally:
+        object.__setattr__(settings, "demo_password", original_demo_password)
+
+    assert market_data_page.status_code == 200
+    assert "Could not retrieve live market data through the Market Data MCP server." not in market_data_page.text
+    assert "Configured: Yes" in market_data_page.text
 
 
 def test_fetch_live_equity_snapshots_accepts_top_level_alpaca_payload(monkeypatch):

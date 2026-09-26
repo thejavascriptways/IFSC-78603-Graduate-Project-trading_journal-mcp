@@ -76,7 +76,7 @@ def test_news_page_shows_portfolio_and_search_news(app_instance, monkeypatch):
 
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         accounts_response = client.get("/api/accounts")
-        manual_account = next(account for account in accounts_response.json() if account["name"] == "Manual Fidelity")
+        manual_account = next(account for account in accounts_response.json() if account["name"] == "Manual Entry")
         client.post(
             "/api/opening-holdings",
             json={

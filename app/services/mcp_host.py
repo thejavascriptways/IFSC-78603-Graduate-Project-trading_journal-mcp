@@ -69,6 +69,12 @@ def list_registered_mcp_servers() -> list[dict[str, Any]]:
     return [asdict(server) for server in REGISTERED_MCP_SERVERS]
 
 
+def build_internal_mcp_headers() -> dict[str, str]:
+    headers = {CORRELATION_ID_HEADER: current_correlation_id()}
+    headers.update(_demo_access_headers())
+    return headers
+
+
 def get_registered_mcp_server(server_id: str) -> MCPServerConfig:
     for server in REGISTERED_MCP_SERVERS:
         if server.id == server_id:
@@ -265,13 +271,11 @@ async def _run_client_operation(
 ) -> T:
     try:
         transport = httpx.ASGITransport(app=app)
-        headers = {CORRELATION_ID_HEADER: current_correlation_id()}
-        headers.update(_demo_access_headers())
         async with httpx.AsyncClient(
             transport=transport,
             base_url="http://127.0.0.1:8000",
             follow_redirects=True,
-            headers=headers,
+            headers=build_internal_mcp_headers(),
         ) as http_client:
             async with streamable_http_client(server.url, http_client=http_client) as (read, write, _):
                 async with ClientSession(read, write) as session:
