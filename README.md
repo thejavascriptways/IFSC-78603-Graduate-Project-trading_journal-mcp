@@ -197,6 +197,24 @@ If `--reload` causes a permission issue on macOS or in a restricted environment,
 uvicorn app.main:app
 ```
 
+## Short-Term Professor Demo With A Tunnel
+
+For a quick live demo, run the app locally and expose it temporarily through a public tunnel. This lets the professor open the web UI and MCP endpoints without a cloud deployment.
+
+Use the step-by-step runbook here:
+
+- [Local Tunnel Professor Demo Runbook](docs/local_tunnel_demo.md)
+- [Public Demo README](README_Public.md)
+
+Fastest no-install tunnel option:
+
+```bash
+export TRADING_JOURNAL_DEMO_PASSWORD="choose-a-temporary-demo-password"
+ssh -R 80:localhost:8000 nokey@localhost.run
+```
+
+Only share the tunnel URL and temporary demo password during the demo, and stop the tunnel with `Control-C` when finished.
+
 ## How To Use The Current App
 
 1. Open the dashboard at `http://127.0.0.1:8000/`.

@@ -31,7 +31,7 @@ This sequence matters because live trading should not be added until the app can
 | 12. Live trading safety gate | Not started | Live trading remains disabled |
 | 13. MCP learning console V2 | Partially complete | Browser MCP Console can discover/call/read/render |
 | 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
-| 15. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
+| 15. Deployment readiness | Partially complete | Deployment plan exists; local tunnel professor-demo runbook added; public cloud deployment pending |
 
 ## 2. Target Architecture
 

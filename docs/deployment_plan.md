@@ -11,6 +11,34 @@ The local-first deployment is the main application path because it is safer for 
 
 ## 2. Recommended Two-Option Plan
 
+### Option 0: Short-Term Local Tunnel Demo
+
+This is the fastest path for the first professor walkthrough.
+
+Purpose:
+
+- Run the real local app on the user's machine.
+- Share a temporary public HTTPS URL during the meeting.
+- Demonstrate both the browser UI and MCP endpoints without cloud setup.
+- Protect the temporary public URL with `TRADING_JOURNAL_DEMO_PASSWORD`.
+
+Recommended tunnel options:
+
+- `localhost.run` with built-in macOS `ssh` for a no-install demo.
+- `ngrok` if a more polished tunnel dashboard or stable domain is useful.
+- `cloudflared` quick tunnel if Cloudflare tooling is installed.
+
+Runbook:
+
+- See `docs/local_tunnel_demo.md`.
+
+Limitations:
+
+- The user's Mac must remain awake and connected.
+- The public URL may change each time the tunnel starts.
+- The tunnel should be stopped after the demo.
+- This should not be used with real broker credentials or live trading.
+
 ### Option 1: Local-First Personal Deployment
 
 This is the recommended path for the real day-to-day application.

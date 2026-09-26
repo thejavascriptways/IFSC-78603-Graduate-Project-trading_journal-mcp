@@ -16,6 +16,10 @@
       return;
     }
 
+    menu.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
     trigger.addEventListener("click", (event) => {
       event.stopPropagation();
       const willOpen = !menu.classList.contains("is-open");

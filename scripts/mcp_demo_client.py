@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import base64
 import json
 import os
 import sys
@@ -14,6 +15,7 @@ from mcp.client.streamable_http import streamable_http_client
 
 
 DEFAULT_BASE_URL = os.getenv("TRADING_JOURNAL_BASE_URL", "http://127.0.0.1:8000")
+ACTIVE_HEADERS: dict[str, str] = {}
 
 
 @dataclass(frozen=True)
@@ -87,6 +89,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--raw",
         action="store_true",
         help="Print full raw MCP JSON responses instead of friendly summaries where supported.",
+    )
+    parser.add_argument(
+        "--demo-username",
+        default=os.getenv("TRADING_JOURNAL_DEMO_USERNAME", "demo"),
+        help="Username for the optional public-demo access gate.",
+    )
+    parser.add_argument(
+        "--demo-password",
+        default=os.getenv("TRADING_JOURNAL_DEMO_PASSWORD"),
+        help="Password for the optional public-demo access gate.",
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -222,8 +234,18 @@ def explain_mcp_client() -> None:
     print("5. Multi-server flow: one client can talk to portfolio, market-data, news, broker, and trading MCP servers.")
 
 
-async def connect_and_run(target: MCPServerTarget, operation: Any) -> Any:
-    async with httpx.AsyncClient(follow_redirects=True, timeout=30) as http_client:
+def build_auth_headers(args: argparse.Namespace) -> dict[str, str]:
+    if not args.demo_password:
+        return {}
+
+    token = f"{args.demo_username}:{args.demo_password}".encode("utf-8")
+    encoded = base64.b64encode(token).decode("ascii")
+    return {"Authorization": f"Basic {encoded}"}
+
+
+async def connect_and_run(target: MCPServerTarget, operation: Any, *, headers: dict[str, str] | None = None) -> Any:
+    request_headers = ACTIVE_HEADERS if headers is None else headers
+    async with httpx.AsyncClient(follow_redirects=True, timeout=30, headers=request_headers) as http_client:
         async with streamable_http_client(target.url, http_client=http_client) as (read, write, _):
             async with ClientSession(read, write) as session:
                 await session.initialize()
@@ -486,8 +508,11 @@ async def run_client_demo(registry: dict[str, MCPServerTarget], *, raw: bool) ->
 
 
 async def run_client(args: argparse.Namespace) -> None:
+    global ACTIVE_HEADERS
+
     registry = build_server_registry(args.base_url)
     target = resolve_target(args, registry)
+    ACTIVE_HEADERS = build_auth_headers(args)
 
     if args.command == "explain":
         explain_mcp_client()

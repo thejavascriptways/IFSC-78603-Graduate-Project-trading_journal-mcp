@@ -20,6 +20,8 @@ class Settings:
     static_dir: Path = BASE_DIR / "app" / "static"
     local_settings_dir: Path = Path(os.getenv("TRADING_JOURNAL_LOCAL_SETTINGS_DIR", BASE_DIR / "instance"))
     static_asset_version: str = os.getenv("TRADING_JOURNAL_STATIC_ASSET_VERSION", "theme-toggle-v1")
+    demo_username: str = os.getenv("TRADING_JOURNAL_DEMO_USERNAME", "demo")
+    demo_password: str | None = os.getenv("TRADING_JOURNAL_DEMO_PASSWORD")
     market_data_provider: str = os.getenv("TRADING_JOURNAL_MARKET_DATA_PROVIDER", "alpaca")
     alpaca_market_data_base_url: str = os.getenv("ALPACA_MARKET_DATA_BASE_URL", "https://data.alpaca.markets")
     alpaca_api_key_id: str | None = os.getenv("ALPACA_API_KEY_ID")

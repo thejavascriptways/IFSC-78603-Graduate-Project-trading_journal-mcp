@@ -105,16 +105,15 @@ a {
 }
 
 .header-controls {
-  display: grid;
-  justify-items: end;
-  gap: 0.85rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .theme-switcher {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  justify-self: end;
+  justify-content: space-between;
+  gap: 0.75rem;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
@@ -126,7 +125,7 @@ a {
   min-height: 38px;
   border: 1px solid var(--accent-border);
   border-radius: 999px;
-  padding: 0.45rem 2.2rem 0.45rem 0.85rem;
+  padding: 0.45rem 1.85rem 0.45rem 0.85rem;
   color: var(--ink);
   background: var(--panel-transparent);
   font: inherit;
@@ -216,8 +215,16 @@ a {
   white-space: nowrap;
 }
 
+.nav-submenu .theme-switcher {
+  min-width: 210px;
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  color: var(--ink);
+}
+
 .nav-submenu a:hover,
-.nav-submenu a:focus {
+.nav-submenu a:focus,
+.nav-submenu .theme-switcher:focus-within {
   background: var(--accent-soft);
   color: var(--accent-strong);
 }
@@ -559,17 +566,7 @@ th {
   }
 
   .header-controls {
-    justify-items: stretch;
     width: 100%;
-  }
-
-  .theme-switcher {
-    justify-self: stretch;
-    justify-content: space-between;
-  }
-
-  .theme-switcher select {
-    min-width: 9rem;
   }
 
   .main-nav {

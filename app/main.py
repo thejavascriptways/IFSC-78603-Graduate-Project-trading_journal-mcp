@@ -10,6 +10,7 @@ from app.audit.middleware import AuditMiddleware
 from app.audit.service import log_application_event
 from app.config import settings
 from app.db import init_db, session_scope
+from app.demo_access import DemoAccessMiddleware
 from app.market_data_mcp import create_market_data_mcp_server
 from app.mcp_server import create_mcp_server
 from app.mcp_servers import create_broker_mcp_server, create_news_mcp_server, create_trading_mcp_server
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     templates = Jinja2Templates(directory=str(settings.templates_dir))
     templates.env.globals["static_asset_version"] = settings.static_asset_version
 
+    application.add_middleware(DemoAccessMiddleware)
     application.add_middleware(AuditMiddleware)
     application.mount("/static", StaticFiles(directory=str(settings.static_dir)), name="static")
     application.include_router(create_web_router(templates))
