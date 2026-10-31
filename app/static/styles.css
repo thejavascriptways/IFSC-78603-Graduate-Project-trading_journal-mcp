@@ -408,404 +408,6 @@ h1 {
   font-size: 0.86rem;
 }
 
-.workflow-section details {
-  border-bottom: 1px solid currentColor;
-  padding: 16px 0;
-  overflow-wrap: anywhere;
-}
-
-.workflow-section summary {
-  cursor: pointer;
-  font-weight: 600;
-  padding: 8px 0;
-}
-
-.workflow-section details li {
-  margin-bottom: 8px;
-}
-
-.workflow-intro {
-  max-width: 46rem;
-}
-
-.documentation-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-  gap: 1.5rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-}
-
-.documentation-hero p:not(.eyebrow) {
-  max-width: 48rem;
-  color: var(--muted);
-}
-
-.documentation-deck-preview {
-  position: relative;
-  min-height: 255px;
-}
-
-.deck-card {
-  position: absolute;
-  display: grid;
-  gap: 0.45rem;
-  width: min(100%, 320px);
-  border: 1px solid var(--accent-border);
-  border-radius: 22px;
-  padding: 1.1rem;
-  background:
-    radial-gradient(circle at top right, var(--accent-soft), transparent 45%),
-    var(--panel);
-  box-shadow: var(--shadow);
-}
-
-.deck-card span {
-  color: var(--accent-strong);
-  font-size: 0.76rem;
-  font-weight: 900;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.deck-card strong {
-  font-size: 1.1rem;
-}
-
-.deck-card small {
-  color: var(--muted);
-}
-
-.deck-card-front {
-  right: 2rem;
-  top: 0;
-  z-index: 3;
-}
-
-.deck-card-middle {
-  right: 0.75rem;
-  top: 82px;
-  z-index: 2;
-  transform: rotate(-2deg);
-}
-
-.deck-card-back {
-  right: 2.8rem;
-  top: 164px;
-  z-index: 1;
-  transform: rotate(2deg);
-}
-
-.documentation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.documentation-card {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.documentation-card span {
-  display: inline-grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--accent-border);
-  border-radius: 14px;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  font-weight: 900;
-}
-
-.documentation-card h3,
-.documentation-card p {
-  margin-bottom: 0;
-}
-
-.documentation-card p {
-  color: var(--muted);
-}
-
-.documentation-section {
-  margin-bottom: 1.5rem;
-}
-
-.workflow-section {
-  margin-bottom: 1.5rem;
-}
-
-.workflow-graphic {
-  display: grid;
-  grid-template-columns: minmax(190px, 1fr) auto minmax(260px, 1.25fr) auto minmax(190px, 1fr);
-  gap: 0.9rem;
-  align-items: center;
-  border: 1px solid var(--accent-border);
-  border-radius: 24px;
-  padding: 1rem;
-  background:
-    radial-gradient(circle at 50% 50%, var(--accent-soft), transparent 42%),
-    var(--field);
-}
-
-.workflow-graphic-column {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.workflow-graphic-label {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.workflow-graphic-node,
-.workflow-graphic-hub {
-  border: 1px solid var(--subtle-line);
-  border-radius: 18px;
-  padding: 0.9rem;
-  background: var(--panel);
-  text-align: center;
-}
-
-.workflow-graphic-node span {
-  display: inline-flex;
-  margin-bottom: 0.45rem;
-  border: 1px solid var(--accent-border);
-  border-radius: 999px;
-  padding: 0.14rem 0.5rem;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.workflow-graphic-node strong,
-.workflow-graphic-hub strong,
-.workflow-graphic-node small,
-.workflow-graphic-hub small {
-  display: block;
-}
-
-.workflow-graphic-node small,
-.workflow-graphic-hub small {
-  margin-top: 0.35rem;
-  color: var(--muted);
-}
-
-.workflow-graphic-hub {
-  border-color: var(--accent-border);
-  background:
-    linear-gradient(160deg, var(--accent-soft), transparent),
-    var(--panel-strong);
-}
-
-.workflow-graphic-connector {
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  color: var(--accent-strong);
-  font-weight: 900;
-}
-
-.workflow-graphic-connector span {
-  color: var(--muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  writing-mode: vertical-rl;
-}
-
-.workflow-graphic-connector strong {
-  font-size: 1.7rem;
-}
-
-.workflow-mini-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.45rem;
-}
-
-.workflow-mini-grid span {
-  border: 1px solid var(--accent-border);
-  border-radius: 12px;
-  padding: 0.5rem 0.35rem;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-align: center;
-}
-
-.workflow-lane-grid {
-  display: grid;
-  grid-template-columns: minmax(160px, 1fr) auto minmax(160px, 1fr) auto minmax(160px, 1fr) auto minmax(160px, 1fr);
-  gap: 0.8rem;
-  align-items: stretch;
-}
-
-.workflow-node,
-.workflow-capability-card,
-.workflow-flow-row,
-.workflow-callout-grid > div {
-  border: 1px solid var(--subtle-line);
-  border-radius: 20px;
-  background: var(--field);
-}
-
-.workflow-node {
-  min-height: 170px;
-  padding: 1rem;
-}
-
-.workflow-node span,
-.workflow-capability-card span {
-  display: inline-flex;
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--accent-border);
-  border-radius: 999px;
-  padding: 0.18rem 0.55rem;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.workflow-node strong {
-  display: block;
-  margin-bottom: 0.55rem;
-  font-size: 1.1rem;
-}
-
-.workflow-node p,
-.workflow-capability-card p,
-.workflow-steps p,
-.workflow-callout-grid p {
-  margin-bottom: 0;
-  color: var(--muted);
-}
-
-.client-node {
-  background:
-    linear-gradient(160deg, rgba(56, 189, 248, 0.1), transparent),
-    var(--field);
-}
-
-.mcp-node {
-  background:
-    linear-gradient(160deg, rgba(45, 212, 191, 0.14), transparent),
-    var(--field);
-}
-
-.service-node {
-  background:
-    linear-gradient(160deg, rgba(74, 222, 128, 0.1), transparent),
-    var(--field);
-}
-
-.workflow-arrow {
-  display: grid;
-  align-items: center;
-  color: var(--accent-strong);
-  font-size: 1.5rem;
-  font-weight: 900;
-}
-
-.workflow-two-column {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.workflow-steps {
-  display: grid;
-  gap: 0.75rem;
-  margin: 1rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.workflow-steps li {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.75rem;
-  align-items: start;
-  border: 1px solid var(--subtle-line);
-  border-radius: 16px;
-  padding: 0.85rem;
-  background: var(--field);
-}
-
-.workflow-steps li > span {
-  display: inline-grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  color: var(--button-ink);
-  background: linear-gradient(135deg, var(--accent), var(--accent-gradient-end));
-  font-weight: 900;
-}
-
-.workflow-steps strong {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.workflow-card-grid,
-.workflow-callout-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 1rem;
-}
-
-.workflow-capability-card,
-.workflow-callout-grid > div {
-  padding: 1rem;
-}
-
-.workflow-capability-card h3,
-.workflow-callout-grid strong {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.workflow-capability-card code {
-  display: inline-flex;
-  margin-top: 0.85rem;
-}
-
-.workflow-flow-list {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.workflow-flow-row {
-  display: grid;
-  grid-template-columns: minmax(160px, 0.38fr) 1fr;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.9rem 1rem;
-}
-
-.workflow-flow-row strong {
-  color: var(--accent-strong);
-}
-
-.workflow-flow-row span {
-  color: var(--muted);
-}
-
 .settings-status-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -1227,50 +829,7 @@ th {
   }
 
   .content-grid,
-  .trade-form,
-  .documentation-hero,
-  .workflow-two-column {
-    grid-template-columns: 1fr;
-  }
-
-  .documentation-deck-preview {
-    min-height: 330px;
-  }
-
-  .deck-card,
-  .deck-card-front,
-  .deck-card-middle,
-  .deck-card-back {
-    right: auto;
-    left: 0;
-  }
-
-  .workflow-lane-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .workflow-graphic {
-    grid-template-columns: 1fr;
-  }
-
-  .workflow-arrow {
-    justify-items: center;
-    transform: rotate(90deg);
-  }
-
-  .workflow-graphic-connector span {
-    writing-mode: horizontal-tb;
-  }
-
-  .workflow-graphic-connector strong {
-    transform: rotate(90deg);
-  }
-
-  .workflow-mini-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .workflow-flow-row {
+  .trade-form {
     grid-template-columns: 1fr;
   }
 
@@ -1279,3 +838,53 @@ th {
     align-items: stretch;
   }
 }
+
+/* ---------- Architecture page ---------- */
+.arch-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.arch-legend-item { font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
+.arch-card { padding: 18px; }
+.arch-scroll { overflow-x: auto; }
+.arch-canvas { position: relative; min-width: 860px; width: 100%; }
+.arch-edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.arch-edge { stroke: var(--muted); stroke-width: 2; marker-end: url(#arch-arrow); opacity: 0.75; transition: stroke 0.15s, opacity 0.15s; }
+.arch-edge.is-active { stroke: var(--accent); stroke-width: 3; opacity: 1; marker-end: url(#arch-arrow-active); }
+.arch-arrowhead { fill: var(--muted); }
+.arch-arrowhead.is-active { fill: var(--accent); }
+.arch-edge-label { fill: var(--muted); font-size: 12px; }
+.arch-node {
+  position: absolute; box-sizing: border-box; z-index: 2; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; padding: 4px 8px; border-radius: 12px; cursor: default;
+  background: var(--panel-strong); border: 1px solid var(--line); color: var(--ink);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s;
+}
+.arch-node:hover, .arch-node:focus-visible, .arch-node.is-active {
+  transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow); outline: none;
+}
+.arch-node-label { font-weight: 700; font-size: 0.92rem; line-height: 1.2; }
+.arch-node-sub { font-size: 0.74rem; color: var(--muted); line-height: 1.2; margin-top: 2px; }
+.arch-group { z-index: 1; align-items: flex-start; justify-content: flex-start; background: transparent; border-style: dashed; border-color: var(--subtle-line); padding: 8px 12px; }
+.arch-group .arch-node-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.arch-group:hover, .arch-group:focus-visible, .arch-group.is-active { transform: none; box-shadow: none; background: var(--accent-soft); }
+.arch-client { border-color: var(--accent-border); }
+.arch-app { background: var(--panel-raised); }
+.arch-mcp { background: var(--accent-soft); border-color: var(--accent-border); }
+.arch-data { background: var(--success-soft); border-color: var(--success-border); }
+.arch-cross { background: var(--warning-soft); border-color: var(--warning-border); }
+.arch-legend-item.arch-client { background: var(--panel-strong); }
+.arch-hint { margin: 10px 0 0; }
+.arch-tip {
+  position: fixed; z-index: 1000; max-width: 340px; padding: 14px 16px; border-radius: 14px; pointer-events: none;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--accent-border-strong); box-shadow: var(--shadow);
+  font-size: 0.86rem; line-height: 1.45;
+}
+.arch-tip[hidden] { display: none; }
+.arch-tip p { margin: 0; }
+.arch-tip-kind { display: inline-block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.arch-tip-title { margin: 8px 0 0; font-size: 1.05rem; }
+.arch-tip-sub { color: var(--muted); font-size: 0.78rem; }
+.arch-tip-summary { margin-top: 8px !important; }
+.arch-tip-list { margin: 8px 0 0; padding-left: 18px; }
+.arch-tip-list li { margin-bottom: 3px; }
+.arch-tip-heading { margin-top: 10px !important; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-strong); font-weight: 700; }
+.arch-tip-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px !important; }
+.arch-tip-chips code { font-size: 0.74rem; padding: 2px 6px; border-radius: 6px; background: var(--code-bg); }

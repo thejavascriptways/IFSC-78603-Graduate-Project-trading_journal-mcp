@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
+from app.architecture import get_architecture
 from app.audit.events import AuditEventStatus, ClientType
 from app.audit.service import list_recent_audit_logs, log_user_action
 from app.config import settings
@@ -269,6 +269,14 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             },
         )
 
+    @router.get("/architecture", response_class=HTMLResponse)
+    def architecture_page(request: Request):
+        return templates.TemplateResponse(
+            request=request,
+            name="architecture.html",
+            context={"architecture": get_architecture()},
+        )
+
     @router.get("/mcp-console", response_class=HTMLResponse)
     def mcp_console_page(
         request: Request,
@@ -292,46 +300,6 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             request=request,
             name="audit.html",
             context={"audit_logs": list_recent_audit_logs(session, limit=50)},
-        )
-
-    @router.get("/workflow", response_class=HTMLResponse)
-    def workflow_page(request: Request):
-        return templates.TemplateResponse(
-            request=request,
-            name="workflow.html",
-            context={"servers": list_registered_mcp_servers()},
-        )
-
-    @router.get("/documentation", response_class=HTMLResponse)
-    def documentation_page(request: Request):
-        return templates.TemplateResponse(
-            request=request,
-            name="documentation.html",
-            context={
-                "mcp_presentation_url": "/documentation/trading-journal-mcp-presentation",
-                "mcp_presentation_filename": "trading_journal_mcp_presentation_v2.pptx",
-            },
-        )
-
-    @router.get("/documentation/mcp-white-paper")
-    def download_mcp_white_paper():
-        return FileResponse(
-            Path(__file__).resolve().parents[2] / "docs" / "mcp_use_case_white_paper.md",
-            media_type="text/markdown",
-            filename="trading_journal_mcp_white_paper.md",
-        )
-
-    @router.get("/documentation/trading-journal-mcp-presentation")
-    def download_mcp_presentation():
-        presentation_path = (
-            Path(__file__).resolve().parents[2]
-            / ".codex_output"
-            / "trading_journal_mcp_presentation_v2.pptx"
-        )
-        return FileResponse(
-            path=presentation_path,
-            filename="Trading_Journal_MCP_Presentation.pptx",
-            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         )
 
     @router.get("/settings/market-data/alpaca", response_class=HTMLResponse)
