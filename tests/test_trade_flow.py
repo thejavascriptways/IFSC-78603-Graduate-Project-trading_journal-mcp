@@ -3,7 +3,6 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from app.config import settings
-from app.services.market_data import fetch_live_equity_snapshots
 
 
 def test_manual_trade_updates_position_and_requires_reason(app_instance):
@@ -459,7 +458,7 @@ def test_live_market_data_page_and_refresh_via_mcp_updates_open_positions(app_in
         assert market_data_page.status_code == 200
         assert "AAPL" in market_data_page.text
         assert "MSFT" in market_data_page.text
-        assert "Live Market Data" in market_data_page.text
+        assert "Market Data" in market_data_page.text
 
         refresh_response = client.post("/api/positions/refresh-market-data")
         assert refresh_response.status_code == 200
@@ -549,7 +548,7 @@ def test_fetch_live_equity_snapshots_accepts_top_level_alpaca_payload(monkeypatc
             }
 
     monkeypatch.setattr(
-        "app.services.market_data.get_market_data_capabilities",
+        "app.services.market_data._get_alpaca_capabilities",
         lambda: {
             "provider": "alpaca",
             "configured": True,
@@ -561,7 +560,9 @@ def test_fetch_live_equity_snapshots_accepts_top_level_alpaca_payload(monkeypatc
     monkeypatch.setattr("app.services.market_data._alpaca_client", lambda: DummyClient())
     monkeypatch.setattr("app.services.market_data._request_alpaca", lambda client, path, params: DummyResponse())
 
-    payload = fetch_live_equity_snapshots(["TSLA"])
+    from app.providers.market_data.alpaca import AlpacaMarketDataProvider
+
+    payload = AlpacaMarketDataProvider().get_equity_snapshots(["TSLA"])
 
     assert payload["missing_symbols"] == []
     assert payload["quotes"][0]["symbol"] == "TSLA"

@@ -29,7 +29,7 @@ The app helps track accounts, holdings, manual trades, open positions, closed po
 - Dashboard P&L tables for overall, account-level, and account plus asset-class reporting.
 - Grouped top navigation for Dashboard, Portfolio, Trading, and Configuration workflows.
 - Market-data page for portfolio symbols.
-- Alpaca-backed market-data integration for supported stocks, ETFs, and options.
+- Alpaca market-data snapshots by default using saved API keys; Yahoo quotes remain optional.
 - Trading Journal MCP server.
 - Market Data MCP server.
 - Yahoo Finance-backed News MCP server for demo stock-news lookup.
@@ -56,12 +56,14 @@ flowchart LR
     HOST --> TMCP["Trading MCP Server"]
 
     PMCP --> DB
-    MMCP --> ALPACA["Alpaca Market Data API"]
+    MMCP --> MARKET["Provider adapter: Alpaca by default"]
+    MARKET --> ALPACA["Alpaca Market Data API"]
+    MARKET -. optional .-> YCHART["Yahoo Finance Public Chart API"]
     NMCP --> YAHOO["Yahoo Finance Demo News Provider"]
     BMCP --> IBKR["IBKR Placeholder"]
     TMCP --> SAFE["Preview-Only Safety Gate"]
     HOST --> AUDIT
-    ALPACA --> AUDIT
+    MARKET --> AUDIT
 
     CLI["External MCP Demo Client"] --> PMCP
     CLI --> MMCP
@@ -113,9 +115,9 @@ flowchart LR
 
 - Python 3.12 or newer.
 - Git.
-- Optional Alpaca paper-trading/market-data API keys if you want live market data.
+- Internet access and Alpaca API keys for market snapshots; Yahoo Finance supplies demo stock news.
 
-The app can run without Alpaca keys, but live quote calls will show a configuration warning until keys are set.
+Alpaca is the default market-data source as of November 1, 2026. Existing saved credentials are reused. Yahoo Finance remains the news source, with its quote adapter available only when explicitly selected.
 
 ## Download The Project
 
@@ -142,12 +144,39 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -e ".[dev]"
 ```
 
-## Optional Market Data Setup
+## Market Data Setup
 
-Use the browser settings screen if you want the market-data page and Market Data MCP server to call Alpaca:
+Use the default Alpaca provider with saved credentials:
+
+1. Start the app and configure keys under `Configuration > Market Data Settings > Manage Alpaca Keys` if they are not already saved.
+2. Click `Refresh Quotes` to fetch snapshots for open and closed portfolio symbols.
+3. Check `As Of`, `Feed`, and `Data Status` for each result. IEX stocks have exchange-limited coverage; indicative option rows are labeled `INDICATIVE`.
+4. To apply prices to open positions, open `Portfolio > Open Positions` and click `Refresh Quotes via MCP`.
+5. Inspect the current provider under `Configuration > Market Data Settings`.
+
+The flow is `Web/CLI -> Market Data MCP -> provider interface -> Alpaca Market Data API`.
+Stocks/ETFs use `/v2/stocks/snapshots`; options use `/v1beta1/options/snapshots` with the saved feed selection.
+These are requested snapshots, not continuous streaming. Missing symbols and provider failures remain visible; bid/ask is shown when supplied.
+Prices are applied to open positions only when the returned currency matches the position currency (when supplied); no FX conversion is performed.
+Mutual-fund NAV lookup and individual bond quotes remain unimplemented.
+
+The integration uses the existing `httpx` dependency, with no new library required.
+See [the market-data workflow](docs/market_data_workflow.md) for implementation details, CLI examples, and references.
+
+### Alpaca Credentials And Provider Selection
+
+Alpaca is the default. If a shell previously selected Yahoo, set this before starting the server (restart a running server):
+
+```bash
+export TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca
+```
+
+To explicitly use the optional Yahoo demo quote provider, set `TRADING_JOURNAL_MARKET_DATA_PROVIDER=yahoo` and restart. It requires no keys, may be delayed, and does not supply bid/ask. Stock News continues using Yahoo independently of this choice.
+
+Use the browser settings screen to manage Alpaca credentials:
 
 1. Start the app.
-2. Open `Configuration > Alpaca Settings`.
+2. Open `Configuration > Market Data Settings > Manage Alpaca Keys`.
 3. Paste the Alpaca API Key ID and Secret Key.
 4. Keep `iex` and `indicative` for the free/paper-friendly setup, unless your account has paid feed entitlements.
 5. Click `Save Alpaca Settings`.
@@ -171,7 +200,7 @@ export ALPACA_STOCK_FEED="sip"
 export ALPACA_OPTION_FEED="opra"
 ```
 
-Asset-class notes:
+Alpaca asset-class notes:
 
 - Stocks and ETFs can use Alpaca stock feeds.
 - Options require appropriate options-data entitlement for true OPRA quotes.
@@ -498,7 +527,9 @@ This is a prototype/graduate-project application, not a production trading syste
 
 ## Planning Documents
 
-The project roadmap is documented in:
+The [documentation index](docs/README.md) identifies current guides, demo material, and historical submissions. Current operation restores Alpaca market data on November 1, 2026, while keeping Yahoo Finance for news and optional demo quotes. The October 20 Yahoo-default revision remains documented as history.
+
+The project roadmap and supporting material are documented in:
 
 - [Accepted Revised Final Proposal - PDF](docs/proposal/Trading_Journal_MCP_Proposal_Revised.pdf)
 - [Accepted Revised Final Proposal - Word](docs/proposal/Trading_Journal_MCP_Proposal_Revised.docx)
@@ -507,8 +538,13 @@ The project roadmap is documented in:
 - [Implementation Plan](docs/implementation_plan.md)
 - [Deployment Plan](docs/deployment_plan.md)
 - [Prototype Baseline](docs/prototype_baseline.md)
+- [Current Market Data Workflow](docs/market_data_workflow.md)
+- [Technical MCP Use Case White Paper](docs/mcp_use_case_white_paper.md)
+- [Current MCP Presentation](docs/presentations/trading_journal_mcp_alpaca.pptx)
+- [Presentation Guide](docs/presentations/README.md)
+- [Proposal Implementation Addendum](docs/proposal/market_data_implementation_addendum.md)
 
-`PROPOSAL.md` is the earlier short proposal draft. The revised final proposal accepted by the professor is stored under `docs/proposal/`.
+`PROPOSAL.md` is the earlier short proposal draft. The revised final proposal accepted by the professor is stored under `docs/proposal/` and is preserved as submitted. Its earlier provider assumptions are explained by the implementation addendum. In the app, open `Configuration > Documentation` for the current slides, white paper, and market-data guide, or `Configuration > Workflow Map` for graphical request paths.
 
 ## Recommended Next Build Step
 

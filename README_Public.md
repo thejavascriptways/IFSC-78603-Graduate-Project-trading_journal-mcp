@@ -36,7 +36,7 @@ Use the public URL only for a controlled demo window.
 - Use sample data when possible.
 - Do not use real broker credentials in a public demo.
 - Do not enable live trading.
-- Use Alpaca paper/demo keys only if market data is needed.
+- Alpaca quotes use saved credentials by default. Use dedicated demo keys; explicitly select optional Yahoo quotes for a key-free demonstration. Yahoo stock news needs no Alpaca keys.
 - Share the temporary URL only with the intended reviewer.
 - Share the temporary demo password separately.
 - Stop the tunnel as soon as the demo is finished.
@@ -51,6 +51,7 @@ cd /Users/deepaksingla/Documents/Trading/TradeAnalyser
 source .venv/bin/activate
 export TRADING_JOURNAL_DEMO_USERNAME="demo"
 export TRADING_JOURNAL_DEMO_PASSWORD="choose-a-temporary-demo-password"
+export TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca
 uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -129,6 +130,16 @@ These commands show that an external MCP client can discover and use the applica
 9. Open `Configuration > Audit Logs` and show that requests are logged.
 10. Run the CLI `client-demo` command to prove that a separate client can call MCP endpoints.
 
+For the market-data demonstration, open `Portfolio > Market Data` and inspect `alpaca`, the selected feed, and source timestamps. Alpaca keys are required; indicative option rows use `INDICATIVE` status. To demonstrate the same provider through an independent client:
+
+```bash
+python3 scripts/mcp_demo_client.py --base-url https://some-name.lhr.life --demo-password "choose-a-temporary-demo-password" market-check --symbols AAPL,MSFT
+```
+
+`Configuration > Documentation` serves the updated slides and white paper. Provider setup is under `Configuration > Market Data Settings`.
+Alpaca IEX stock coverage is exchange-limited, and indicative options differ from OPRA quotes. Optional Yahoo charts may be delayed and omit bid/ask. Individual bonds and mutual-fund NAV lookup remain unimplemented.
+See [the market-data workflow](docs/market_data_workflow.md) and [documentation index](docs/README.md) for current implementation details.
+
 ## Step 6: Stop Public Access
 
 Stop the tunnel terminal:
@@ -152,4 +163,3 @@ Control-C
 - The app stays protected by HTTP Basic authentication while `TRADING_JOURNAL_DEMO_PASSWORD` is set.
 - The public URL should not be left running unattended.
 - This demo path is separate from the future cloud deployment plan.
-

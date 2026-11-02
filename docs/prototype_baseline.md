@@ -2,21 +2,25 @@
 
 Baseline date: 2026-08-31
 
+Current update, November 1, 2026: Alpaca is again the default quote provider using saved credentials. Yahoo remains the news source and an optional quote adapter. The October provider experiment described below is historical; use [Market Data Workflow](market_data_workflow.md) for the current setup.
+
+Historical record: the sections below describe the frozen prototype, including its earlier Alpaca data path. They are not current startup instructions. On October 20, 2026, Yahoo Finance became the default demo quote provider without API keys; Alpaca became an explicitly selected optional provider. The MCP endpoint and tool names stayed unchanged. Current setup, limits, and verification are documented in [Market Data Workflow](market_data_workflow.md), the [implementation plan](implementation_plan.md), and the [documentation index](README.md).
+
 ## 1. Purpose
 
 This document freezes the accepted prototype behavior before the real application refactor begins. Future implementation work should preserve these baseline capabilities unless we intentionally replace them with a better version.
 
 This is not a production release. It is the working prototype that was accepted as preliminary project work.
 
-## 2. Repository Status
+## 2. Repository Status At The Freeze
 
-The current project directory is not initialized as a Git repository, so this freeze is documented through:
+At the time this baseline was written, the project directory was not initialized as a Git repository, so the freeze was documented through:
 
 - A written baseline in this file.
 - Existing automated tests.
 - The current requirements and implementation planning documents.
 
-If Git is added later, this baseline should become the first meaningful commit/tag before major refactoring.
+The project now uses Git. This paragraph preserves the earlier baseline context; current repository status must be checked in Git.
 
 ## 3. Current Application Stack
 
@@ -113,9 +117,9 @@ Accounting baseline:
 - Open positions are listed when quantity is non-zero.
 - Closed positions are listed when quantity is zero.
 
-## 8. Current Market Data Behavior
+## 8. Frozen Market Data Behavior (Alpaca)
 
-The prototype includes a Market Data MCP server backed by Alpaca configuration.
+The frozen prototype included a Market Data MCP server backed by Alpaca configuration. The October 20 Yahoo change intentionally replaces this default while retaining Alpaca as an option; the following list is historical.
 
 Supported behavior:
 

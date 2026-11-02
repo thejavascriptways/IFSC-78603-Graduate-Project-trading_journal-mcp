@@ -3,10 +3,10 @@
 <section class="content-grid">
   <article class="card">
     <p class="eyebrow">External Feed</p>
-    <h2>Live Market Data</h2>
+    <h2>Market Data</h2>
     <p class="helper-copy">
-      This page now pulls live market data from an external provider through the separate Market Data MCP server.
-      Open and closed positions are shown together so you can inspect your current watchlist in one place.
+      Quote snapshots arrive through the Market Data MCP server.
+      Open and closed positions appear together. Prices may be delayed; check the source timestamp in As Of.
     </p>
 
     {% if error %}
@@ -18,7 +18,7 @@
     {% endif %}
 
     <div class="action-row">
-      <a href="/market-data" class="primary-link">Refresh Live Table</a>
+      <a href="/market-data" class="primary-link">Refresh Quotes</a>
       <a href="/positions" class="secondary-link">Refresh Open Position Marks</a>
     </div>
   </article>
@@ -32,6 +32,7 @@
       <li>Stock feed: <code>{{ capabilities.stock_feed or "n/a" }}</code></li>
       <li>Option feed: <code>{{ capabilities.option_feed or "n/a" }}</code></li>
       <li>Configured: {{ "Yes" if capabilities.configured else "No" }}</li>
+      <li><a href="/settings/market-data">Market Data Settings</a></li>
     </ul>
   </article>
 </section>
@@ -76,7 +77,7 @@
           <th>Bid</th>
           <th>Ask</th>
           <th>Day Change %</th>
-          <th>Live Unrealized P&amp;L</th>
+          <th>Snapshot Unrealized P&amp;L</th>
           <th>As Of</th>
           <th>Feed</th>
           <th>Data Status</th>
@@ -119,7 +120,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="15">No positions are available for live market-data display yet.</td>
+          <td colspan="15">No positions are available for market-data display yet.</td>
         </tr>
         {% endfor %}
       </tbody>

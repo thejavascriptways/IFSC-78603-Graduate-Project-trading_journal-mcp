@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Configuration</p>
+      <h2>Market Data Settings</h2>
+      <p class="helper-copy workflow-intro">
+        Current source: <strong>{{ capabilities.provider }}</strong>.
+        {% if capabilities.requires_api_key is defined and not capabilities.requires_api_key %}
+        No API key or brokerage account is needed.
+        {% elif capabilities.requires_api_key %}
+        Alpaca API keys are required. Credentials configured: <strong>{{ "Yes" if capabilities.configured else "No" }}</strong>.
+        {% endif %}
+      </p>
+    </div>
+    <a href="/market-data" class="primary-link">Open Market Data</a>
+  </div>
+  <ul class="plain-list">
+    {% for note in capabilities.notes %}<li>{{ note }}</li>{% endfor %}
+  </ul>
+</section>
+<section class="card audit-stack">
+  <p class="eyebrow">Market Data Credentials</p>
+  <h3>Alpaca</h3>
+  <p>Alpaca is the default provider for stock, ETF, and option snapshots. Existing saved credentials are reused.</p>
+  <a href="/settings/market-data/alpaca" class="secondary-link">Manage Alpaca Keys</a>
+  <p>Yahoo Finance continues to supply Stock News. Its quote adapter remains available by explicitly setting <code>TRADING_JOURNAL_MARKET_DATA_PROVIDER=yahoo</code> and restarting the server.</p>
+</section>
+{% endblock %}

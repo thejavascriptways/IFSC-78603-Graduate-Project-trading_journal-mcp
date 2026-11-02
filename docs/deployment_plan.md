@@ -1,5 +1,7 @@
 # Trading Journal MCP Deployment Plan
 
+Market-data update, November 1, 2026: the default quote path uses Alpaca with saved keys; Yahoo supplies stock news. Yahoo quotes remain an explicitly selected key-free alternative. Outbound HTTPS access to each selected provider is required. This document's hosting comparisons remain planning notes, not a new verification of free-tier terms.
+
 ## 1. Deployment Goal
 
 The application should support two deployment paths:
@@ -31,6 +33,7 @@ Recommended tunnel options:
 Runbook:
 
 - See `docs/local_tunnel_demo.md`.
+- Use `TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca` for the default path; use dedicated demo keys or explicitly select Yahoo quotes for a key-free demonstration. See `docs/market_data_workflow.md` for timestamps, provider errors, and coverage.
 
 Limitations:
 
@@ -121,7 +124,7 @@ Recommended usage:
 - Use demo/sample data only.
 - Enable audit logging.
 - Disable live trading.
-- Use fake/simulated quote, news, broker, and order providers where useful.
+- The current quote demo uses Alpaca and the news demo uses Yahoo. A synthetic news provider exists; a fully offline quote adapter is future work and must not be assumed to exist.
 
 ## 3. What Must Be Publicly Accessible
 
@@ -239,6 +242,7 @@ Pros:
 Limitations:
 
 - Free accounts have restricted outbound internet access.
+- Alpaca quotes and Yahoo news require outbound HTTPS access to the selected provider hosts; validate this before selecting a host with outbound restrictions.
 - Free accounts have limited CPU/disk.
 - Free web app may expire after one month.
 - ASGI/FastAPI support and MCP Streamable HTTP behavior should be validated.
@@ -351,8 +355,14 @@ flowchart LR
     APP --> NMCP["News MCP"]
     APP --> AUDIT["Audit Logs"]
 
-    MMCP --> FAKE["Demo Quote Provider"]
-    NMCP --> FN["Demo News Provider"]
+    MMCP --> ALPACA["Alpaca snapshots - dedicated demo keys"]
+    MMCP -. optional .-> YCHART["Yahoo chart snapshots - no keys"]
+    NMCP --> YNEWS["Yahoo public search news - no keys"]
+    YCHART --> EXT["Outbound HTTPS to Yahoo"]
+    ALPACA --> AEXT["Outbound HTTPS to Alpaca"]
+    YNEWS --> EXT
+    MMCP -. future .-> FAKE["Offline quote provider - not implemented"]
+    NMCP -. optional .-> FN["Synthetic demo news provider"]
 ```
 
 ## 8. Deployment Architecture for Future Production
@@ -366,12 +376,18 @@ flowchart LR
     APP --> DB["Postgres Database"]
     APP --> LOGS["Audit Logs"]
     APP --> MCP["MCP Servers"]
-    MCP --> MKT["Market Data Provider"]
-    MCP --> NEWS["News Provider"]
+    MCP --> MKT["Approved Market Data Provider - future"]
+    MCP --> NEWS["Approved News Provider - future"]
     MCP --> IBKR["IBKR Broker API / Gateway"]
 ```
 
 ## 9. App Changes Needed Before Public Demo
+
+Default quote configuration is `TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca` and requires Alpaca keys. Use dedicated demo credentials, never production broker credentials.
+Keep `YAHOO_FINANCE_BASE_URL` at its configured HTTPS Yahoo host, and allow outbound requests with the configured market-data timeout.
+The app has no automatic fallback between providers and no quote cache. Show per-symbol failures and source timestamps during demonstrations.
+Saved Alpaca keys are reused by the default quote provider. Yahoo quotes require explicit provider selection and a restart.
+Before a broader hosted release, review source terms, permitted use, coverage, request limits, and market-data latency under roadmap item 17.
 
 Required before deployment:
 

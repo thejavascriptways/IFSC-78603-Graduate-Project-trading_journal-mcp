@@ -25,6 +25,7 @@ instance/
 !.env.example
 
 # Generated artifacts
+.codex_build/
 output/
 tmp/
 *.log

@@ -15,6 +15,7 @@ from app.audit.events import AuditEventStatus
 from app.audit.service import duration_ms_since, log_external_api_call
 from app.config import settings
 from app.models.enums import AssetClass
+from app.providers.market_data.base import MarketDataProvider, MarketDataProviderError
 from app.services.market_data_settings import get_alpaca_market_data_settings
 from app.services.mcp_host import build_internal_mcp_headers
 from app.services.portfolio import list_closed_positions, list_positions, update_position_market_price
@@ -30,6 +31,36 @@ class MarketDataError(Exception):
 
 
 def get_market_data_capabilities() -> dict[str, Any]:
+    return _market_data_provider().get_capabilities()
+
+
+def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
+    try:
+        return _market_data_provider().get_equity_snapshots(symbols)
+    except MarketDataProviderError as exc:
+        raise MarketDataError(str(exc)) from exc
+
+
+def fetch_live_option_snapshots(symbols: list[str]) -> dict[str, Any]:
+    try:
+        return _market_data_provider().get_option_snapshots(symbols)
+    except MarketDataProviderError as exc:
+        raise MarketDataError(str(exc)) from exc
+
+
+def _market_data_provider() -> MarketDataProvider:
+    from app.providers.market_data.alpaca import AlpacaMarketDataProvider
+    from app.providers.market_data.yahoo import YahooFinanceMarketDataProvider
+
+    provider = settings.market_data_provider.strip().lower()
+    if provider in {"yahoo", "yahoo_finance"}:
+        return YahooFinanceMarketDataProvider()
+    if provider == "alpaca":
+        return AlpacaMarketDataProvider()
+    raise MarketDataError(f"Unknown market-data provider: {provider}.")
+
+
+def _get_alpaca_capabilities() -> dict[str, Any]:
     alpaca_settings = get_alpaca_market_data_settings()
     configured = alpaca_settings.configured
     stock_feed = alpaca_settings.stock_feed
@@ -37,16 +68,21 @@ def get_market_data_capabilities() -> dict[str, Any]:
 
     notes = [
         "Stocks and ETFs are fetched from Alpaca Market Data.",
+        "Prices are requested snapshots, not a continuously streaming feed. Check each source timestamp.",
         "Mutual funds usually publish NAV once per business day rather than live intraday quotes.",
         "Bonds are not covered by Alpaca's stock/options feeds; FINRA TRACE is trade transparency, not live quotes.",
     ]
+
+    if stock_feed == "iex":
+        notes.append("The IEX stock feed covers IEX exchange activity, not the consolidated US market.")
 
     if option_feed == "indicative":
         notes.append("Options are using Alpaca's indicative feed unless you switch to OPRA with a paid entitlement.")
 
     return {
-        "provider": settings.market_data_provider,
+        "provider": "alpaca",
         "configured": configured,
+        "requires_api_key": True,
         "source": alpaca_settings.source,
         "api_key_id": alpaca_settings.masked_api_key_id,
         "stock_feed": stock_feed,
@@ -55,11 +91,11 @@ def get_market_data_capabilities() -> dict[str, Any]:
     }
 
 
-def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
-    capabilities = get_market_data_capabilities()
+def _fetch_alpaca_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
+    capabilities = _get_alpaca_capabilities()
     alpaca_settings = get_alpaca_market_data_settings()
     if not capabilities["configured"]:
-        raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
+        raise MarketDataError("Alpaca market data is not configured. Add credentials under Configuration > Market Data Settings > Manage Alpaca Keys.")
 
     normalized_symbols = _normalize_symbols(symbols)
     if not normalized_symbols:
@@ -105,11 +141,11 @@ def fetch_live_equity_snapshots(symbols: list[str]) -> dict[str, Any]:
     }
 
 
-def fetch_live_option_snapshots(symbols: list[str]) -> dict[str, Any]:
-    capabilities = get_market_data_capabilities()
+def _fetch_alpaca_option_snapshots(symbols: list[str]) -> dict[str, Any]:
+    capabilities = _get_alpaca_capabilities()
     alpaca_settings = get_alpaca_market_data_settings()
     if not capabilities["configured"]:
-        raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
+        raise MarketDataError("Alpaca market data is not configured. Add credentials under Configuration > Market Data Settings > Manage Alpaca Keys.")
 
     normalized_symbols = _normalize_symbols(symbols)
     if not normalized_symbols:
@@ -164,6 +200,7 @@ def build_portfolio_market_data_targets(session: Session) -> list[dict[str, Any]
                 "account_name": position.account.name,
                 "symbol": position.instrument.symbol,
                 "asset_class": position.instrument.asset_class.value,
+                "currency": position.instrument.currency,
                 "quantity": str(position.quantity),
                 "cost_basis": str(position.cost_basis),
                 "average_cost": str(position.average_cost),
@@ -231,7 +268,7 @@ async def fetch_live_market_data_from_mcp(app: FastAPI, targets: list[dict[str, 
                 async with ClientSession(read, write) as client_session:
                     await client_session.initialize()
                     capabilities_result = await client_session.call_tool("get_market_data_capabilities")
-                    capabilities = capabilities_result.model_dump(mode="json").get("structuredContent", {})
+                    capabilities = _mcp_payload(capabilities_result)
 
                     if capabilities.get("configured") is not True:
                         return {
@@ -244,7 +281,7 @@ async def fetch_live_market_data_from_mcp(app: FastAPI, targets: list[dict[str, 
                             "get_equity_snapshots",
                             {"symbols": equity_symbols},
                         )
-                        equity_payload = equity_result.model_dump(mode="json").get("structuredContent", {})
+                        equity_payload = _mcp_payload(equity_result)
                         for quote in equity_payload.get("quotes", []):
                             lookup[(quote["symbol"], AssetClass.STOCK.value)] = quote
                             lookup[(quote["symbol"], AssetClass.ETF.value)] = quote
@@ -254,9 +291,11 @@ async def fetch_live_market_data_from_mcp(app: FastAPI, targets: list[dict[str, 
                             "get_option_snapshots",
                             {"symbols": option_symbols},
                         )
-                        option_payload = option_result.model_dump(mode="json").get("structuredContent", {})
+                        option_payload = _mcp_payload(option_result)
                         for quote in option_payload.get("quotes", []):
                             lookup[(quote["symbol"], AssetClass.OPTION.value)] = quote
+    except MarketDataError:
+        raise
     except Exception as exc:  # pragma: no cover - integration tests cover the user-facing error path
         raise MarketDataError("Could not retrieve live market data through the Market Data MCP server.") from exc
 
@@ -264,6 +303,14 @@ async def fetch_live_market_data_from_mcp(app: FastAPI, targets: list[dict[str, 
         "capabilities": capabilities,
         "lookup": lookup,
     }
+
+
+def _mcp_payload(result: Any) -> dict[str, Any]:
+    payload = result.model_dump(mode="json")
+    if payload.get("isError"):
+        message = " ".join(item.get("text", "") for item in payload.get("content", []))
+        raise MarketDataError(message or "Market Data MCP returned an error.")
+    return payload.get("structuredContent") or {}
 
 
 def build_live_market_data_rows(
@@ -276,15 +323,15 @@ def build_live_market_data_rows(
     for target in targets:
         asset_class = target["asset_class"]
         quote = live_lookup.get((target["symbol"], asset_class))
-        support_status = "LIVE"
-        note = None
+        support_status = quote.get("data_status", "LIVE") if quote else "NO_DATA"
+        note = quote.get("note") if quote else None
 
         if asset_class == AssetClass.MUTUAL_FUND.value:
             support_status = "NAV_ONLY"
             note = "Mutual funds typically publish NAV after market close, not live intraday prices."
         elif asset_class == AssetClass.BOND.value:
             support_status = "UNSUPPORTED"
-            note = "Bond live quotes are not available from the Alpaca stock/options feeds."
+            note = "Individual bond quotes are not supported by the configured market-data provider."
         elif asset_class == AssetClass.CASH.value:
             support_status = "UNSUPPORTED"
             note = "Cash balances do not have market quote data."
@@ -292,10 +339,14 @@ def build_live_market_data_rows(
             support_status = "NO_DATA"
             note = "No live market data was returned for this symbol."
         elif quote.get("found") is not True:
-            support_status = "NO_DATA"
+            support_status = quote.get("data_status", "NO_DATA")
             note = quote.get("note") or "No live market data was returned for this symbol."
 
         live_price = quote.get("mark_price") if quote else None
+        if quote and target.get("currency") and quote.get("currency") and target["currency"] != quote["currency"]:
+            support_status = "CURRENCY_MISMATCH"
+            note = f"Quote currency {quote['currency']} differs from position currency {target['currency']}; no conversion is applied."
+            live_price = None
         live_unrealized = None
         live_unrealized_pct = None
 
@@ -345,6 +396,7 @@ def apply_live_market_data_to_open_positions(
         positions_by_symbol.setdefault(key, []).append(position)
 
     updated_symbols: set[str] = set()
+    updated_position_ids: set[int] = set()
     updated_position_count = 0
     missing_symbols: list[str] = []
 
@@ -353,7 +405,12 @@ def apply_live_market_data_to_open_positions(
             continue
         key = (target["symbol"], target["asset_class"])
         quote = live_lookup.get(key)
-        if not quote or quote.get("mark_price") is None:
+        if (
+            not quote
+            or quote.get("found") is not True
+            or quote.get("mark_price") is None
+            or (target.get("currency") and quote.get("currency") and target["currency"] != quote["currency"])
+        ):
             missing_symbols.append(target["symbol"])
             continue
 
@@ -363,8 +420,17 @@ def apply_live_market_data_to_open_positions(
             missing_symbols.append(target["symbol"])
             continue
 
+        if not market_price.is_finite() or market_price <= ZERO:
+            missing_symbols.append(target["symbol"])
+            continue
+
         for position in positions_by_symbol.get(key, []):
+            if quote.get("currency") and quote["currency"] != position.instrument.currency:
+                continue
+            if position.id in updated_position_ids:
+                continue
             update_position_market_price(session, position.id, market_price)
+            updated_position_ids.add(position.id)
             updated_position_count += 1
             updated_symbols.add(position.instrument.symbol)
 
@@ -501,6 +567,7 @@ def _normalize_option_snapshot(symbol: str, snapshot: dict[str, Any], feed: str)
         "bid_price": bid_price,
         "ask_price": ask_price,
         "change_percent": None,
+        "data_status": "INDICATIVE" if feed == "indicative" else "LIVE",
         "as_of": latest_trade.get("t") or latest_quote.get("t"),
         "note": note,
     }

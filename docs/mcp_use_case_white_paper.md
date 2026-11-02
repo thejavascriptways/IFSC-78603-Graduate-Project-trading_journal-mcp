@@ -2,9 +2,9 @@
 
 Author: Deepak Singla (project owner; authorship and affiliation require author review)
 
-Date: October 17, 2026
+Date: November 1, 2026
 
-Revision: 2.0, expanded technical case study. Implementation descriptions reflect the working tree inspected on this date, including uncommitted project changes.
+Revision: 2.2, Alpaca default restored; Yahoo quotes remain optional. Implementation descriptions reflect the working tree inspected on this date, including uncommitted project changes. The accepted proposal remains historical; see `docs/proposal/market_data_implementation_addendum.md` for the provider-change record.
 
 Document type: ACM-style technical white paper. This is a project manuscript, not an accepted or published ACM paper. Venue-specific formatting, author metadata, rights statements, and submission declarations must be supplied before submission.
 
@@ -56,11 +56,13 @@ The five interfaces are mounted within one application. Logical server separatio
 
 ### 3.3 Provider Adapters
 
-Market-data functionality uses Alpaca adapters. Results depend on symbol coverage, credentials, subscription entitlement, and feed freshness. A successful response is not proof of a consolidated real-time feed. News configuration supports Yahoo Finance, GDELT, and a synthetic demo provider. Yahoo is the default and is a demonstration source, not a production service guarantee. Broader production-provider integration and persistent quote/news caching remain roadmap work.
+Market-data functionality selects `AlpacaMarketDataProvider` by default as of November 1, 2026, reusing saved API keys and selected feeds. The service preserves the MCP tools, resource, prompt, and endpoint. Yahoo chart quotes remain optional through `TRADING_JOURNAL_MARKET_DATA_PROVIDER=yahoo`; no keys are needed for that adapter. The October Yahoo-default experiment and November restoration demonstrate provider substitution behind the same MCP contract. Both paths retrieve requested snapshots rather than continuous streams. The optional Yahoo request pattern follows the chart reference [11]; this app uses HTTPX directly. Alpaca authentication and feed coverage are documented by the provider [13].
+
+News configuration separately supports Yahoo Finance, GDELT, and a synthetic demo provider. Yahoo remains the default for news, using a separate public-search adapter. Both Yahoo integrations are demonstration sources, not production guarantees. Coverage, source terms, rate limits, freshness policies, and persistent quote/news caching remain areas for further work [12].
 
 ### 3.4 Traceability
 
-Correlation IDs connect requests to internal MCP operations. Persistent logs cover user requests, MCP operations, application events, and supported external calls. A redaction helper removes recognized secret fields before storage; a browser audit viewer exposes recent records. The design supports investigation, but does not establish tamper evidence, complete domain-event coverage, retention compliance, or production observability. Alpaca external-call logging is implemented; equivalent coverage must be checked for each additional provider.
+Correlation IDs connect requests to internal MCP operations. Persistent logs cover user requests, MCP operations, application events, and supported external calls. A redaction helper removes recognized secret fields before storage; a browser audit viewer exposes recent records. The design supports investigation, but does not establish tamper evidence, complete domain-event coverage, retention compliance, or production observability. Yahoo market-data requests log successful and failed calls, including missing symbols, invalid responses, and rate limits. Alpaca external-call logging remains active for the default path; coverage must still be checked for each additional provider.
 
 ## 4. Representative Workflows
 
@@ -70,7 +72,7 @@ The browser submits a trade form to FastAPI. Validation precedes portfolio servi
 
 ### 4.2 Market Data and News
 
-The route collects symbols and creates an internal MCP operation. The Python client initializes a session, calls the selected tool, and receives structured results. The MCP server delegates to its service/provider; the route renders the response. Missing credentials, unavailable symbols, and provider failures must remain distinguishable from valid results. These operations retrieve context; they do not submit orders.
+The route collects symbols and creates an internal MCP operation. The Python client initializes a session, calls the selected tool, and receives structured results. The MCP server delegates to its service/provider; the route renders the response. Yahoo requires no API keys. Optional-provider credential failures, unavailable symbols, and external request failures remain distinct from valid results. A mixed Yahoo batch preserves successful quotes and reports errors per symbol. These operations retrieve context; they do not submit orders.
 
 ### 4.3 Console and External Client
 
@@ -192,7 +194,7 @@ flowchart TB
     Servers --> Context["Market-data and news services"]
     Servers --> Preview["Broker status and order preview"]
     Portfolio --> DB["SQLite: accounts, instruments, trades, positions"]
-    Context --> Providers["Alpaca / Yahoo / GDELT / synthetic provider"]
+    Context --> Providers["Alpaca quotes and Yahoo news by default; optional Yahoo quotes, GDELT, synthetic news"]
     Routes -.-> Audit["Persistent audit records"]
     Host -.-> Audit
     Providers -.->|"Where instrumented"| Audit
@@ -488,7 +490,27 @@ The preview does not establish account existence, buying power, market hours, se
 
 The quote envelope includes provider, asset class, feed, quote records, and missing symbols. Individual records can contain symbol, found state, last trade, bid, ask, mark, change percentage, timestamp, and a note. These fields should travel together: a price without provider/feed/time context loses information needed to assess its meaning.
 
-The configured defaults are `iex` for stocks and `indicative` for options. These are configuration choices in this application. Entitlement, actual feed behavior, and provider product definitions must be checked against the provider for a deployed account. This paper does not claim that default feeds deliver a consolidated executable price.
+For the explicitly selected optional Yahoo provider, clients receive `provider=yahoo_finance` with feed `yahoo_chart`. That provider requests `/v8/finance/chart/{symbol}` using a one-day range, one-minute interval, and regular-session data. It uses the metadata pair `regularMarketPrice` and `regularMarketTime`, rather than assigning the request time to a potentially older observation [11]. The optional Yahoo path does not require credentials. `As Of` is the source timestamp in UTC, and a valid returned record is labeled `SNAPSHOT`; no real-time latency guarantee is asserted. The adapter computes day change only when a valid previous-close baseline exists. Bid and ask remain absent, so it does not synthesize a midpoint.
+
+Yahoo stock/ETF lookup preserves the caller's normalized symbol while adapting US share-class `.A`/`.B` suffixes for Yahoo. Option lookup uses an exact contract chart symbol and is best effort; expired or unavailable contracts return `NO_DATA`. Mutual-fund NAV lookup, individual bond quotes, option chains, and Greeks are not implemented. Per-symbol failures use `ERROR` for provider/parsing failures and `NO_DATA` for unavailable data. Nonpositive, nonfinite, or untimestamped prices are rejected. The row builder and mark refresh block a returned-currency mismatch instead of performing an implicit FX conversion.
+
+Alpaca is now the default quote provider. It requests `/v2/stocks/snapshots` and `/v1beta1/options/snapshots`, authenticated with the saved key pair. The default `iex` stock feed covers IEX activity rather than the consolidated US market; the default options feed is `indicative`, and those rows are labeled `INDICATIVE`. OPRA and SIP access depend on account entitlements [13]. Bid/ask is shown when returned. The app exposes provider timestamps and notes but does not implement continuous WebSocket streaming. A successful response is not evidence of a consolidated executable price.
+
+```mermaid
+flowchart LR
+    Web["Browser page"] --> Internal["Internal Python MCP client"]
+    CLI["Independent CLI"] --> MCP["Unchanged Market Data MCP tools"]
+    Internal --> MCP
+    MCP --> Selection["Market-data service selects provider"]
+    Selection -. explicit setting .-> Yahoo["Optional Yahoo chart adapter"]
+    Selection --> Alpaca["Alpaca adapter - default, saved keys"]
+    Yahoo --> Normalize["Normalized prices and source timestamps"]
+    Alpaca --> Normalize
+    Yahoo --> Audit["External-call audit record"]
+    Alpaca --> Audit
+    Normalize --> Result["Feed status / quotes / missing data"]
+    Result --> Clients["UI table / CLI output"]
+```
 
 Market-data display and mark refresh are distinct. A page can show context for symbols derived from holdings/history, while a refresh updates applicable open positions. A closed symbol appearing on the page does not imply that a closed position is being revalued as open exposure.
 
@@ -502,7 +524,9 @@ News relevance is a retrieval concern. A ticker match, search phrase, or provide
 
 ### 14.3 Credentials and Local Configuration
 
-The Alpaca settings page can save keys/feed configuration, display masked values, update feeds without requiring the secret again, and clear saved settings. Tests cover these operations. Saved credentials live in the local settings directory rather than being returned in full to the page.
+The provider-neutral page at `/settings/market-data` shows the active provider and data limits, plus Alpaca credential status and a key-management link. Alpaca uses its saved local settings or environment fallback. Optional Yahoo quotes and default Yahoo news share `YAHOO_FINANCE_BASE_URL` but use separate timeout settings.
+
+The Alpaca settings page can save keys/feed configuration, display masked values, update feeds without requiring the secret again, and clear saved settings. Tests cover these operations. Saved credentials live in the local settings directory rather than being returned in full to the page. They are reused for quotes when Alpaca is selected, which is now the default. There is no automatic fallback between providers. Environment-based provider selection takes effect on server restart.
 
 Masked display and Git exclusion do not establish encrypted secret storage. File permissions, backups, local account access, and secret rotation remain operational concerns. Environment variables are supported, but they also require careful handling. Reproduction artifacts should contain feed names and whether credentials were configured, never the values.
 
@@ -594,8 +618,8 @@ The current evidence is source inspection plus functional tests. Stronger claims
 |---|---|---|
 | Schema and service | Are inputs and accounting outcomes consistent? | Focused tests exist |
 | Mounted MCP integration | Do initialization, discovery, and tools work in the ASGI app? | Tests exist |
-| External HTTP | Can a separate process discover and call the running app? | CLI available; environment-specific demonstration needed |
-| Live provider | Do configured feeds/news sources work for this account now? | Credential/network-dependent; mocks are not live proof |
+| External HTTP | Can a separate process discover and call the running app? | CLI demonstrated against localhost with Yahoo snapshots; other deployments need separate validation |
+| Live provider | Does the selected external source return timestamped data now? | Yahoo quote check observed without keys; availability and freshness remain source/network-dependent |
 | Operational | Does deployment survive restart, concurrency, and failures? | Not comprehensively evaluated |
 | Human factors | Does the Workflow Map improve understanding? | No controlled study |
 
@@ -607,6 +631,7 @@ The current evidence is source inspection plus functional tests. Stronger claims
 | `test_mcp_flow.py` | Catalogs, portfolio mutation/readback, market snapshots, scaffold status, console, Workflow Map, manuscript download | Mostly in-process; not an independent-client conformance suite |
 | `test_audit_flow.py` | Correlation propagation, persistent host/transport logs, nested redaction | Does not prove semantic completeness or tamper resistance |
 | `test_market_data_settings.py` | Save/mask/clear credentials, preserve existing secret, reject invalid feeds | Does not establish encrypted storage |
+| `test_yahoo_market_data.py` | Key-free provider selection, symbol normalization, valid timestamps/prices, partial failures, malformed responses, rate limits, audit persistence, MCP/UI/refresh integration, currency mismatch rejection | Mocked Yahoo responses; no uptime or exchange-latency guarantee |
 | `test_news_flow.py` | News MCP results and portfolio/search page behavior | Provider behavior mocked |
 | `test_demo_access.py` | Unauthorized blocked, authorized accepted, disabled gate permits local app | Basic gate only; no tenant ownership proof |
 
@@ -614,7 +639,11 @@ The fixtures set an isolated test database and local settings directory before a
 
 ### 17.3 Reporting Observations
 
+On November 1, 2026, after restoring Alpaca as the default, `python3 -m pytest -q` reported **52 passed in 5.30 seconds**. Tests cover default MCP dispatch with saved dummy Alpaca credentials, the distinct `INDICATIVE` option label, and explicitly selected Yahoo integration. The independent CLI `market-check --symbols AAPL,MSFT` then returned Alpaca IEX snapshots for both symbols with `missing_symbols=[]`, using existing saved credentials. This is a functional provider check, not a continuous-streaming, latency, or reliability study. The October results below are retained as historical observations.
+
 On October 17, 2026, the local suite was rerun with `.venv/bin/python -m pytest -q` and reported **28 passed, 1 warning in 3.85 seconds**. The warning concerned the Starlette TestClient HTTPX integration. The elapsed time is the test runner's reported suite duration, not a request-latency or application-performance benchmark. The count is a point-in-time test observation, not a coverage percentage or proof that all protocol and domain edge cases have been exercised.
+
+That earlier observation predates the Yahoo market-data change. On October 20, 2026, `python3 -m pytest -q` reported **49 passed in 5.00 seconds** after the provider implementation. A separate CLI invocation, `python3 scripts/mcp_demo_client.py market-check --symbols AAPL,MSFT`, then discovered the real HTTP MCP endpoint and returned Yahoo snapshots for both symbols with `missing_symbols=[]`, `provider=yahoo_finance`, `feed=yahoo_chart`, source timestamps, and `SNAPSHOT` status. The browser Market Data page also displayed Yahoo rows for existing open and closed symbols. These are dated functional observations, not a longitudinal availability or real-time-feed study. After updating documentation and testing its downloads, the suite reported **50 passed in 5.35 seconds**; the [documentation index](README.md#verification) records that follow-up.
 
 Tool/resource/prompt inventory counts are independently derived from source decorators. Numerical examples in Section 12 are explanatory calculations. No latency, throughput, user satisfaction, failure-rate, or investment-return measurements were collected for this paper.
 
@@ -661,8 +690,10 @@ A local development process must remain alive for the browser and external CLI t
 | `TRADING_JOURNAL_DATABASE_URL` | Database selection | Use a disposable database for demonstrations |
 | `TRADING_JOURNAL_LOCAL_SETTINGS_DIR` | Local saved provider settings | Keep secrets out of artifacts |
 | `TRADING_JOURNAL_DEMO_USERNAME` / `TRADING_JOURNAL_DEMO_PASSWORD` | Optional Basic demo gate | Record enabled/disabled state, never credential values |
-| `ALPACA_API_KEY_ID` / `ALPACA_API_SECRET_KEY` | Provider credentials | Do not print or publish |
-| `ALPACA_STOCK_FEED` / `ALPACA_OPTION_FEED` | Requested feeds | Record with provider-entitlement context |
+| `TRADING_JOURNAL_MARKET_DATA_PROVIDER` | Quote provider selection, default `alpaca` | Use `yahoo` only for optional demo quotes; restart after changing |
+| `YAHOO_FINANCE_BASE_URL` | Shared Yahoo quote/news HTTPS host | Default `https://query1.finance.yahoo.com`; no keys required |
+| `ALPACA_API_KEY_ID` / `ALPACA_API_SECRET_KEY` | Default Alpaca credentials | Reused from local settings or environment; never print or publish |
+| `ALPACA_STOCK_FEED` / `ALPACA_OPTION_FEED` | Alpaca feed configuration | Applies to the default quote provider; does not change Yahoo news |
 | `TRADING_JOURNAL_NEWS_PROVIDER` | Yahoo, GDELT, or synthetic news selection | Use `demo` for an offline-friendly illustration |
 | `TRADING_JOURNAL_MARKET_DATA_TIMEOUT_SECONDS` / `TRADING_JOURNAL_NEWS_TIMEOUT_SECONDS` | Provider timeout configuration | Record when evaluating failures/latency |
 | `TRADING_JOURNAL_BASE_URL` | External CLI destination | Match the actual server port |
@@ -710,10 +741,11 @@ For a synthetic demonstration, choose a new disposable database filename and a s
 export TRADING_JOURNAL_DATABASE_URL=sqlite:///./demo_white_paper.db
 export TRADING_JOURNAL_LOCAL_SETTINGS_DIR=./instance_white_paper_demo
 export TRADING_JOURNAL_NEWS_PROVIDER=demo
+export TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8018
 ```
 
-These exports apply to that shell. The synthetic news setting avoids a live news dependency; it does not create mock Alpaca quotes. Market-data calls still need credentials or will report configuration limitations.
+These exports apply to that shell. The synthetic news setting avoids an external news dependency; it does not create synthetic quotes. Market-data calls now use Alpaca and require its saved/environment credentials plus network access. For a deliberately key-free quote demo, explicitly select `yahoo` instead. The automated tests mock external providers; a fully offline quote provider for the running demo is not implemented.
 
 ### A.2 Discover the Servers
 
@@ -737,9 +769,12 @@ python scripts/mcp_demo_client.py --base-url http://127.0.0.1:8018 --server jour
 python scripts/mcp_demo_client.py --base-url http://127.0.0.1:8018 --server journal read-resource portfolio://summary
 python scripts/mcp_demo_client.py --base-url http://127.0.0.1:8018 --server journal get-prompt daily_portfolio_review --arguments '{"focus":"overall"}'
 python scripts/mcp_demo_client.py --base-url http://127.0.0.1:8018 --server trading call get_trading_capabilities
+python scripts/mcp_demo_client.py --base-url http://127.0.0.1:8018 market-check --symbols AAPL,MSFT
 ```
 
 Expected categories of output are a local account list, a JSON summary, generated prompt messages, and capability flags. Values depend on the selected database. A generated prompt is not an answered analysis.
+
+The market check returns Alpaca snapshots using saved credentials by default. Explicitly selected Yahoo quotes remain key-free. Provider errors and missing symbols are valid demonstration outcomes and should remain visible in captured results.
 
 ### A.4 Exercise a Synthetic Portfolio
 
@@ -794,8 +829,10 @@ Paths below are relative to the repository root so the manuscript remains portab
 | Redaction and persistent logging | `app/audit/service.py` |
 | Demo access and local transport settings | `app/demo_access.py`, `app/mcp_servers/security.py` |
 | News selection and result-envelope handling | `app/services/news.py` |
-| Quote orchestration and provider requests | `app/services/market_data.py` |
-| Local Alpaca settings | `app/services/market_data_settings.py` |
+| Quote orchestration, provider selection, row status, mark application | `app/services/market_data.py` |
+| Yahoo chart requests, source timestamps, normalization, errors, provider audit | `app/providers/market_data/yahoo.py` |
+| Default Alpaca adapter and saved settings | `app/providers/market_data/alpaca.py`, `app/services/market_data_settings.py` |
+| Current quote workflow and provider-change addendum | `docs/market_data_workflow.md`, `docs/proposal/market_data_implementation_addendum.md` |
 | External client commands and aliases | `scripts/mcp_demo_client.py` |
 | Learning interface and manuscript download | `app/templates/workflow.html`, `app/routes/web.py` |
 | Functional evidence | `tests/` |
@@ -850,3 +887,9 @@ AI assistance was used to draft and expand the manuscript and inspect associated
 [9] Model Context Protocol. Prompts. Specification version 2025-11-25. https://modelcontextprotocol.io/specification/2025-11-25/server/prompts (accessed October 17, 2026).
 
 [10] Model Context Protocol. Security Best Practices. Versioned documentation. https://modelcontextprotocol.io/docs/2025-11-25/tutorials/security/security_best_practices (accessed October 17, 2026).
+
+[11] yfinance project. Price history scraper implementation: Yahoo chart endpoint, parameters, and metadata handling. https://github.com/ranaroussi/yfinance/blob/main/yfinance/scrapers/history.py (implementation reference reviewed for the October 20, 2026 provider update; the application uses HTTPX directly).
+
+[12] yfinance project. Documentation and source-access notices. https://ranaroussi.github.io/yfinance/ (background on unofficial Yahoo integration and links to source-data usage terms; production use needs a separate review).
+
+[13] Alpaca. About Market Data API. https://docs.alpaca.markets/us/docs/about-market-data-api (reviewed November 1, 2026 for authentication and IEX/indicative versus consolidated-feed coverage).

@@ -6,7 +6,8 @@
     <h2>Alpaca Settings</h2>
     <p class="helper-copy">
       Save Alpaca market-data credentials here instead of exporting them in the command prompt.
-      The Market Data MCP server will use these settings for live stock, ETF, and option quote requests.
+      Alpaca is the default source for stock, ETF, and option snapshots. Existing saved keys are reused.
+      Yahoo Finance supplies Stock News separately and does not use these keys.
     </p>
 
     {% if error %}

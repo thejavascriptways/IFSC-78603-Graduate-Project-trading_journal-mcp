@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
@@ -34,6 +35,7 @@ from app.services.market_data import (
     build_live_market_data_rows,
     build_portfolio_market_data_targets,
     fetch_live_market_data_from_mcp,
+    get_market_data_capabilities,
 )
 from app.services.mcp_host import MCPHostError, list_registered_mcp_servers
 from app.services.news import NewsServiceError, build_portfolio_news_symbols, fetch_news_from_mcp
@@ -217,7 +219,7 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             error_message = str(exc)
 
         if capabilities.get("configured") is not True and error_message is None:
-            error_message = "Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings."
+            error_message = "Market data is not configured. Check Configuration > Market Data Settings."
 
         return templates.TemplateResponse(
             request=request,
@@ -300,6 +302,63 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
             request=request,
             name="audit.html",
             context={"audit_logs": list_recent_audit_logs(session, limit=50)},
+        )
+
+    @router.get("/workflow", response_class=HTMLResponse)
+    def workflow_page(request: Request):
+        return templates.TemplateResponse(
+            request=request,
+            name="workflow.html",
+            context={"servers": list_registered_mcp_servers()},
+        )
+
+    @router.get("/documentation", response_class=HTMLResponse)
+    def documentation_page(request: Request):
+        return templates.TemplateResponse(
+            request=request,
+            name="documentation.html",
+            context={
+                "mcp_presentation_url": "/documentation/trading-journal-mcp-presentation",
+                "mcp_presentation_filename": "trading_journal_mcp_alpaca.pptx",
+            },
+        )
+
+    @router.get("/documentation/mcp-white-paper")
+    def download_mcp_white_paper():
+        return FileResponse(
+            Path(__file__).resolve().parents[2] / "docs" / "mcp_use_case_white_paper.md",
+            media_type="text/markdown",
+            filename="trading_journal_mcp_white_paper.md",
+        )
+
+    @router.get("/documentation/trading-journal-mcp-presentation")
+    def download_mcp_presentation():
+        presentation_path = (
+            Path(__file__).resolve().parents[2]
+            / "docs"
+            / "presentations"
+            / "trading_journal_mcp_alpaca.pptx"
+        )
+        return FileResponse(
+            path=presentation_path,
+            filename="Trading_Journal_MCP_Alpaca_Presentation.pptx",
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        )
+
+    @router.get("/documentation/market-data-workflow")
+    def download_market_data_workflow():
+        return FileResponse(
+            Path(__file__).resolve().parents[2] / "docs" / "market_data_workflow.md",
+            media_type="text/markdown",
+            filename="Trading_Journal_Market_Data_Workflow.md",
+        )
+
+    @router.get("/settings/market-data", response_class=HTMLResponse)
+    def market_data_settings_page(request: Request):
+        return templates.TemplateResponse(
+            request=request,
+            name="market_data_settings.html",
+            context={"capabilities": get_market_data_capabilities()},
         )
 
     @router.get("/settings/market-data/alpaca", response_class=HTMLResponse)
@@ -509,7 +568,7 @@ def create_web_router(templates: Jinja2Templates) -> APIRouter:
         try:
             live_payload = await fetch_live_market_data_from_mcp(request.app, open_targets)
             if live_payload["capabilities"].get("configured") is not True:
-                raise MarketDataError("Live market data is not configured. Add Alpaca credentials under Configuration > Alpaca Settings.")
+                raise MarketDataError("Market data is not configured. Check Configuration > Market Data Settings.")
             refresh_result = apply_live_market_data_to_open_positions(
                 session,
                 open_targets,

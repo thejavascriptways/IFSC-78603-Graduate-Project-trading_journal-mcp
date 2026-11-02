@@ -1,5 +1,7 @@
 # Trading Journal MCP Application Implementation Plan
 
+Documentation revision: November 1, 2026. Alpaca is restored as the default market-data provider using saved credentials. Yahoo remains the news source and an optional quote adapter. The accepted proposal and frozen baseline retain their historical context, with an [implementation addendum](proposal/market_data_implementation_addendum.md). See [the documentation index](README.md).
+
 ## 1. Implementation Approach
 
 The current application is the accepted prototype. The next work should convert it into the real Trading Journal MCP application in controlled milestones. The safest approach is to build from low-risk capabilities toward high-risk capabilities:
@@ -23,7 +25,7 @@ This sequence matters because live trading should not be added until the app can
 | 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows exist; bulk opening holding CSV import and user-selectable dark/light themes are complete in the prototype path |
 | 5. Watchlist feature | Future idea | Deferred from near-term roadmap; web watchlist page and persistence can be revisited later |
 | 6. Add/remove stocks from watchlist | Future idea | Deferred from near-term roadmap; add/remove UI, API, audit, and MCP tools can be revisited later |
-| 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and browser-based Alpaca settings screen exist; quote persistence pending |
+| 7. Market Data MCP V2 | Partially complete | Alpaca default restored with saved credentials, IEX stocks and indicative options; Yahoo quotes optional; quote persistence pending |
 | 8. News MCP Server | Partially complete | Yahoo Finance demo provider, News MCP tools, Stock News page, and CLI news commands exist; caching/persistence pending |
 | 9. IBKR Broker MCP Server | Future idea | Status scaffolding exists, but real IBKR sync is deferred from the near-term roadmap |
 | 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
@@ -33,9 +35,9 @@ This sequence matters because live trading should not be added until the app can
 | 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
 | 15. Deployment readiness | Partially complete | Deployment plan exists; local tunnel professor-demo runbook added; public cloud deployment pending |
 | 16. Multi-user profiles and user-owned MCP connections | Future idea | Allow each user to have separate portfolio data, credentials, and external MCP/provider connections |
-| 17. Production-grade news provider | Future idea | Replace unofficial demo news source with an official API-backed provider before production use |
+| 17. Production-grade news and market-data providers | Future idea | Validate Alpaca access/coverage and Yahoo demo sources for licensing, reliability, and freshness before production use |
 | 18. Application Workflow Visualization Screen | Complete | Configuration > Workflow Map includes visual architecture, expandable request traces, registry descriptions, direct-service versus MCP paths, audit boundaries, and scaffold status |
-| 19. ACM-Style MCP Use Case White Paper | Complete (project manuscript) | docs/mcp_use_case_white_paper.md; downloadable from Documentation; includes abstract, architecture, evaluation procedure, limitations, references, authorship and AI disclosure. Author review and venue-specific typesetting remain publication tasks |
+| 19. ACM-Style MCP Use Case White Paper | Complete (project manuscript) | docs/mcp_use_case_white_paper.md revision 2.2 reflects the restored Alpaca default and historical Yahoo evidence; downloadable from Documentation. Author review and venue-specific typesetting remain publication tasks |
 
 ### Items 18 and 19 Completion Scope (October 17, 2026)
 
@@ -124,7 +126,7 @@ Recommended module structure:
 - `app/services/news.py`: news orchestration.
 - `app/services/broker.py`: broker sync orchestration.
 - `app/services/orders.py`: order staging, preview, status, reconciliation.
-- `app/providers/market_data/`: Alpaca and IBKR market-data providers.
+- `app/providers/market_data/`: Alpaca default adapter and optional Yahoo Finance adapter; IBKR is future work.
 - `app/providers/news/`: Polygon, Finnhub, Alpha Vantage, or NewsAPI provider.
 - `app/providers/broker/`: IBKR provider.
 - `app/mcp_servers/`: separate MCP server modules by domain.
@@ -155,7 +157,7 @@ Current progress:
 - Correlation ID middleware now creates or propagates `X-Correlation-ID`.
 - Web/API/MCP transport requests are logged.
 - Internal MCP Console operations are logged through the MCP host service.
-- Alpaca market-data HTTP calls are logged with redacted metadata.
+- Alpaca and optional Yahoo market-data HTTP calls are logged with redacted metadata.
 - A first audit viewer exists at `/audit`, with JSON access at `/api/audit/logs`.
 - Secret redaction has automated test coverage.
 
@@ -183,7 +185,7 @@ Acceptance criteria:
 
 - A user can open the audit screen and see recent app actions. `Completed: initial viewer exists.`
 - MCP CLI calls create MCP request logs. `Partially complete: HTTP transport calls are logged.`
-- External market-data calls create external API logs. `Partially complete: Alpaca calls are logged.`
+- External market-data calls create external API logs. `Partially complete: Yahoo Finance and Alpaca calls are logged.`
 - Sensitive values are redacted in stored logs. `Completed for current redaction helper.`
 - Tests prove redaction works. `Completed for current redaction helper.`
 - Audit filters and exports work. `Pending.`
@@ -280,16 +282,18 @@ Goal: turn market data into a robust MCP-backed subsystem.
 Deliverables:
 
 - Provider interface for market data.
-- Alpaca provider retained.
+- Alpaca default provider with saved keys. `Restored November 1, 2026; on-demand snapshots, not streaming.`
+- Yahoo Finance quote adapter retained as an explicit optional provider.
 - Browser-based Alpaca settings screen for local credentials and feed selection. `Complete in prototype path.`
 - IBKR market-data provider added when broker connectivity is ready.
 - Quote snapshot storage.
-- Quote freshness and entitlement status shown in UI.
+- Quote timestamps and snapshot limitations shown in UI. `Complete for Yahoo demo snapshots; freshness thresholds and persistence pending.`
 - MCP tools/resources/prompts expanded.
 
 Implementation tasks:
 
 - Define `MarketDataProvider` interface.
+- Route existing MCP tools through the selected provider, preserving web/CLI compatibility. `Complete for Yahoo and Alpaca.`
 - Move Alpaca-specific code into `app/providers/market_data/alpaca.py`.
 - Keep Alpaca API keys out of Git and expose masked configuration status in the UI. `Complete for local settings.`
 - Add quote snapshot persistence.
@@ -589,7 +593,7 @@ Goal: evolve the app from a single local/demo profile into a multi-user applicat
 
 Current design note:
 
-- Today, all users who access the same running app instance share the same database, Alpaca settings, audit logs, and MCP/provider configuration.
+- Today, all users who access the same running app instance share the same database, shared Alpaca settings, audit logs, and MCP/provider configuration. Only explicitly selected Yahoo quotes require no account credentials.
 - This phase is a future idea only. No implementation should begin until authentication, authorization, and secure secret storage are planned.
 
 Deliverables:

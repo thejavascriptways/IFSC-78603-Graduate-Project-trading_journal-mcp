@@ -28,7 +28,9 @@ def create_market_data_mcp_server(
         "Trading Journal Market Data MCP",
         instructions=(
             "Market data MCP server for Trading Journal. "
-            "Use it to fetch live stock, ETF, and option data from the configured external provider."
+            "Fetch stock, ETF, and available option snapshots from the configured external provider. "
+            "Alpaca is the default market-data source. Read capabilities for credentials, "
+            "feed coverage, and timestamp limitations. Snapshot requests are not continuous streaming."
         ),
         json_response=True,
         stateless_http=True,
@@ -43,7 +45,7 @@ def create_market_data_mcp_server(
 
     @market_data_mcp.tool(name="get_equity_snapshots", structured_output=True)
     def get_equity_snapshots_tool(symbols: list[str]) -> dict[str, Any]:
-        """Fetch live stock and ETF snapshots from the external market-data provider."""
+        """Fetch stock/ETF snapshots with source timestamps; freshness depends on the provider."""
         try:
             return equity_snapshot_fetcher(symbols)
         except MarketDataError as exc:
@@ -51,7 +53,7 @@ def create_market_data_mcp_server(
 
     @market_data_mcp.tool(name="get_option_snapshots", structured_output=True)
     def get_option_snapshots_tool(symbols: list[str]) -> dict[str, Any]:
-        """Fetch live option snapshots from the external market-data provider."""
+        """Fetch available contract snapshots; unsupported or expired contracts may have no data."""
         try:
             return option_snapshot_fetcher(symbols)
         except MarketDataError as exc:

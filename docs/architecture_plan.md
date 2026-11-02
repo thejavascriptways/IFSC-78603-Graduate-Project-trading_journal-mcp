@@ -1,6 +1,10 @@
 # Trading Journal MCP Architecture Plan
 
+Current data-source revision: November 1, 2026. Alpaca is the default market-data provider using saved keys. Yahoo Finance supplies demo news and remains an optional quote provider. See [Market Data Workflow](market_data_workflow.md), [the technical case study](mcp_use_case_white_paper.md), and [documentation index](README.md).
+
 ## 1. Step 2 And Step 3 Architecture Outcome
+
+The top-level Architecture page (`/architecture`) provides an interactive component diagram defined in `app/architecture.py`, rendered by `app/templates/architecture.html`, and enhanced by `app/static/architecture.js`. It complements, rather than replaces, the detailed Configuration > Workflow Map and Documentation pages.
 
 Step 2 adds architecture around the accepted prototype without restarting the project. The current working behavior remains in place, but the code now has clearer boundaries for future MCP servers, external providers, services, audit logging, broker sync, news, and order workflows.
 
@@ -41,7 +45,9 @@ flowchart LR
     TMCP --> ORDERS["Order Service"]
 
     PORT --> DB["SQLite Database"]
-    MKT --> ALPACA["Alpaca Adapter"]
+    MKT -. optional .-> YMARKET["Yahoo Finance Market Data Adapter"]
+    YMARKET --> CHART["Yahoo Public Chart API"]
+    MKT --> ALPACA["Alpaca Adapter - default"]
     NEWS --> YAHOO["Yahoo Finance News Adapter"]
     BROKER --> IBKR["IBKR Adapter Placeholder"]
     ORDERS --> SAFE["Preview-Only Safety Gate"]
@@ -104,6 +110,7 @@ Current provider areas:
 Current adapters:
 
 - `AlpacaMarketDataProvider`
+- `YahooFinanceMarketDataProvider` (optional demo adapter; Alpaca is the default)
 - `YahooFinanceNewsProvider`
 - `GdeltNewsProvider`
 - `DemoNewsProvider`
@@ -244,7 +251,7 @@ flowchart TD
     E --> I["Show unrealized P&L"]
     F --> J["Show realized P&L"]
     G --> K["Internal MCP host calls Market Data MCP"]
-    K --> L["Alpaca provider returns quote snapshot when configured"]
+    K --> L["Alpaca provider returns snapshots using saved keys and selected feeds"]
     H --> M["Dashboard tables update"]
     I --> M
     J --> M
@@ -275,10 +282,12 @@ sequenceDiagram
 flowchart LR
     MCP["MCP Server"] --> SVC["Domain Service"]
     SVC --> IFACE["Provider Interface"]
-    IFACE --> A["Alpaca Market Data Adapter"]
+    IFACE -. optional .-> Y["Yahoo Finance Market Data Adapter"]
+    IFACE --> A["Alpaca Market Data Adapter - default"]
     IFACE --> N["Yahoo Finance News Adapter"]
     IFACE --> B["IBKR Broker Placeholder"]
     A --> EXT1["External Market Data API"]
+    Y --> CHART["Yahoo Finance Public Chart API"]
     N --> EXT2["Yahoo Finance Public Search"]
     B --> EXT3["Future IBKR Gateway"]
 ```
@@ -315,7 +324,7 @@ flowchart TD
 | 4. Portfolio and journal core improvements | Partially complete | Manual trade/holding/P&L flows, bulk holding CSV import, and dark/light theme switching exist; richer journal screens pending |
 | 5. Watchlist feature | Future idea | Deferred from near-term roadmap |
 | 6. Add/remove stocks from watchlist | Future idea | Deferred from near-term roadmap |
-| 7. Market Data MCP V2 | Partially complete | Alpaca-backed MCP path and local Alpaca settings screen exist; snapshot persistence pending |
+| 7. Market Data MCP V2 | Partially complete | Alpaca snapshots default with saved credentials; Yahoo quotes optional; quote persistence pending |
 | 8. News MCP Server | Partially complete | Yahoo Finance demo provider, News MCP tools, Stock News page, and CLI news commands exist |
 | 9. IBKR Broker MCP Server | Future idea | Status scaffolding exists, but real IBKR sync is deferred |
 | 10. Order staging and preview | Partially complete | Safe `preview_order` exists; ticket database/UI pending |
@@ -325,9 +334,9 @@ flowchart TD
 | 14. Reports, exports, and review workflows | Early partial | Dashboard P&L exists; exports/trends pending |
 | 15. Deployment readiness | Planning only | Deployment plan exists; public deployment pending |
 | 16. Multi-user profiles and user-owned MCP connections | Future idea | Separate portfolio data, credentials, and MCP/provider connections per user |
-| 17. Production-grade news provider | Future idea | Replace unofficial demo news source with an official API-backed provider before production use |
+| 17. Production-grade news and market-data providers | Future idea | Replace or validate unofficial Yahoo demo sources before production use |
 | 18. Application Workflow Visualization Screen | Complete | Configuration > Workflow Map includes architecture, expandable request traces, direct-service versus MCP paths, audit boundaries, and scaffold status |
-| 19. ACM-Style MCP Use Case White Paper | Complete (project manuscript) | Detailed manuscript in docs/mcp_use_case_white_paper.md, downloadable from Documentation; author review and venue-specific typesetting remain publication tasks |
+| 19. ACM-Style MCP Use Case White Paper | Complete (project manuscript) | Manuscript revision 2.2 restores Alpaca as default and is downloadable from Documentation; author review and venue-specific typesetting remain publication tasks |
 
 ## 10. Verification
 

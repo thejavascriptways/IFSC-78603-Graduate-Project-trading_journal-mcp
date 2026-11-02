@@ -519,7 +519,7 @@ async def run_market_check(market: MCPServerTarget, symbols: str, *, raw: bool) 
 
     print_section("3. Tool Call: get_equity_snapshots")
     if payload["quotes"] is None:
-        print("Skipped because live market data is not configured for this app instance.")
+        print("Skipped because market data is not configured for this app instance.")
     else:
         dump_json(extract_structured_content(payload["quotes"]))
 

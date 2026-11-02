@@ -4,6 +4,8 @@ This runbook is for the short-term professor demo path: run Trading Journal MCP 
 
 Use this path when you want the professor to see the real working prototype without setting up a cloud deployment yet.
 
+Market-data update, November 1, 2026: Alpaca supplies quote snapshots using saved keys. Yahoo supplies stock news, with its quote adapter optional. Check timestamps and feed coverage; the app requests snapshots rather than continuously streaming. See [the market-data workflow](market_data_workflow.md).
+
 ## 1. What This Demonstrates
 
 The tunnel exposes the same local FastAPI application that you use at `http://127.0.0.1:8000`.
@@ -20,6 +22,8 @@ After the tunnel starts, the professor can access:
 | Trading MCP | `http://127.0.0.1:8000/trading-mcp/` | `https://your-tunnel-url/trading-mcp/` |
 | Audit Logs | `http://127.0.0.1:8000/audit` | `https://your-tunnel-url/audit` |
 | MCP Console | `http://127.0.0.1:8000/mcp-console` | `https://your-tunnel-url/mcp-console` |
+| Documentation | `http://127.0.0.1:8000/documentation` | `https://your-tunnel-url/documentation` |
+| Market Data Settings | `http://127.0.0.1:8000/settings/market-data` | `https://your-tunnel-url/settings/market-data` |
 
 ## 2. Demo Safety Checklist
 
@@ -28,7 +32,7 @@ Before sharing a tunnel URL:
 - Use sample/demo data when possible.
 - Do not enter real broker credentials in a public demo.
 - Keep live trading disabled.
-- Prefer Alpaca paper/demo keys if market data is needed.
+- Use dedicated demo Alpaca credentials for the default quote path. Do not expose real brokerage credentials; explicitly select optional Yahoo quotes for a key-free quote demo.
 - Keep the tunnel open only during the demo.
 - Stop the tunnel immediately after the demo with `Control-C`.
 - Do not commit `instance/`, `.env`, API keys, or `trading_journal.db` to GitHub.
@@ -44,6 +48,7 @@ cd /Users/deepaksingla/Documents/Trading/TradeAnalyser
 source .venv/bin/activate
 export TRADING_JOURNAL_DEMO_USERNAME="demo"
 export TRADING_JOURNAL_DEMO_PASSWORD="choose-a-temporary-demo-password"
+export TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca
 uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -82,6 +87,7 @@ Example MCP demo command using the public URL:
 
 ```bash
 python3 scripts/mcp_demo_client.py --base-url https://some-name.lhr.life --demo-password "choose-a-temporary-demo-password" discover
+python3 scripts/mcp_demo_client.py --base-url https://some-name.lhr.life --demo-password "choose-a-temporary-demo-password" market-check --symbols AAPL,MSFT
 ```
 
 Notes:
@@ -89,6 +95,7 @@ Notes:
 - The URL can change each time you start the tunnel.
 - The tunnel stays active only while the SSH command is running.
 - If the SSH connection drops, restart the command and share the new URL.
+- A working tunnel does not guarantee external-provider availability. Quote rows retain provider errors, missing symbols, and source timestamps.
 
 ## 5. Option B: ngrok Tunnel
 

@@ -1,5 +1,7 @@
 # Trading Journal: An MCP-Based Portfolio and Trade Journal Platform
 
+Historical draft: this is the earlier proposal, not the accepted revised submission or the current implementation guide. The accepted files are in [docs/proposal/](docs/proposal/README.md). As of November 1, 2026, Alpaca is restored as the market-data default using saved keys; Yahoo supplies stock news and optional demo quotes. See the [implementation addendum](docs/proposal/market_data_implementation_addendum.md) and [current workflow](docs/market_data_workflow.md).
+
 ## Introduction
 
 Model Context Protocol (MCP) is an open standard that allows an application to connect AI models to external tools, data sources, and reusable prompts through a consistent interface. Instead of building one-off integrations for every system, MCP gives developers a structured way to expose capabilities such as account data, portfolio summaries, market quotes, and trade-entry actions. For a project like a trading journal, this is especially useful because the application can be designed not only as a normal web app, but also as a system whose portfolio data and workflows can be accessed by MCP clients in a clean and inspectable way.

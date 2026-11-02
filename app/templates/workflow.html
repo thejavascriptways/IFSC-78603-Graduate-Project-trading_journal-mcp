@@ -8,7 +8,7 @@
       This screen explains how Trading Journal demonstrates the MCP concept. The browser UI and the console client
       use MCP through Python clients: the browser calls FastAPI, which hosts the internal client; the CLI connects
       directly to a selected MCP endpoint. Manual portfolio pages call services directly. MCP servers coordinate application services,
-      the local database, audit logs, and external providers such as Alpaca and Yahoo Finance.
+      the local database, audit logs, Alpaca for market snapshots, and Yahoo Finance for stock news. The Yahoo quote adapter remains optional.
     </p>
   </article>
 
@@ -42,7 +42,7 @@
       <li>A Python MCP client initializes a session with the selected mounted server over Streamable HTTP.</li>
       <li>The server delegates to its service/provider; the external API supplies quotes or news.</li>
       <li>Structured results return to the page. Missing credentials, unsupported symbols, and provider errors remain visible.</li>
-      <li>MCP operations are logged; external API audit coverage currently includes Alpaca.</li>
+      <li>MCP operations are logged; Alpaca market-data requests and optional Yahoo quote requests also create external API audit records.</li>
     </ol>
     <p>The internal HTTP client uses an in-process ASGI transport; it does not require a separate loopback network server.</p>
   </details>
@@ -125,7 +125,7 @@
       <div class="workflow-graphic-node mcp-node">
         <span>External</span>
         <strong>Providers</strong>
-        <small>Alpaca market data, Yahoo news</small>
+        <small>Alpaca market snapshots and Yahoo stock news</small>
       </div>
     </div>
   </div>
@@ -266,7 +266,7 @@
     <article class="workflow-capability-card">
       <span>Market Data MCP</span>
       <h3>Live Quote Data</h3>
-      <p>Calls Alpaca through provider services for stock, ETF, and option snapshots. Coverage and freshness depend on feed entitlement.</p>
+      <p>Calls Alpaca for stock, ETF, and option snapshots using saved API keys. Source timestamps and selected feeds determine coverage. Yahoo quotes remain an optional demo provider.</p>
       <code>/market-data-mcp/</code>
     </article>
     <article class="workflow-capability-card">
@@ -305,8 +305,8 @@
       <span>UI form -> FastAPI route -> Portfolio service -> Database -> Audit log -> Dashboard/Positions</span>
     </div>
     <div class="workflow-flow-row">
-      <strong>Live market data</strong>
-      <span>Market Data page -> Internal MCP client -> Market Data MCP -> Alpaca provider -> Alpaca API -> UI table</span>
+      <strong>Market snapshots</strong>
+      <span>Market Data page -> Internal MCP client -> Market Data MCP -> Alpaca provider -> Alpaca Market Data API -> Timestamped UI table</span>
     </div>
     <div class="workflow-flow-row">
       <strong>Stock news</strong>

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from io import BytesIO
+from zipfile import ZipFile
 
 import httpx
 from fastapi.testclient import TestClient
@@ -45,6 +47,27 @@ def test_white_paper_download_is_linked_and_available(app_instance):
     assert "## Abstract" in response.text
     assert "## References" in response.text
     assert "AI assistance was used" in response.text
+
+
+def test_documentation_downloads_current_alpaca_materials(app_instance):
+    with TestClient(app_instance) as client:
+        page = client.get("/documentation")
+        assert "Alpaca supplies market-data snapshots using saved API keys" in page.text
+        assert 'href="/documentation/trading-journal-mcp-presentation"' in page.text
+        slides = client.get("/documentation/trading-journal-mcp-presentation")
+        guide = client.get("/documentation/market-data-workflow")
+    assert slides.status_code == 200
+    assert "presentationml.presentation" in slides.headers["content-type"]
+    with ZipFile(BytesIO(slides.content)) as deck:
+        visible_text = " ".join(
+            deck.read(name).decode("utf-8")
+            for name in deck.namelist()
+            if name.startswith("ppt/slides/slide") and name.endswith(".xml")
+        )
+    assert "Live prices through Alpaca" in visible_text
+    assert guide.status_code == 200
+    assert guide.headers["content-type"].startswith("text/markdown")
+    assert "Alpaca is the default market-data source" in guide.text
 
 
 def test_mcp_server_exposes_tools_resources_and_portfolio_state(app_instance):

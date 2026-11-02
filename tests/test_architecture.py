@@ -13,6 +13,10 @@ def test_architecture_page_renders_diagram_and_nav_tab(app_instance):
     with TestClient(app_instance, base_url="http://127.0.0.1:8000") as client:
         page = client.get("/architecture")
         home = client.get("/")
+        styles = client.get("/static/styles.css")
+        for path in ("/documentation", "/workflow", "/settings/market-data"):
+            assert client.get(path).status_code == 200
+            assert f'href="{path}"' in home.text
 
     assert page.status_code == 200
     assert "Architecture" in page.text
@@ -20,6 +24,9 @@ def test_architecture_page_renders_diagram_and_nav_tab(app_instance):
     for label in ("Trading Journal", "Market Data", "Services layer", "Audit and observability"):
         assert label in page.text
     assert 'href="/architecture"' in home.text
+    assert styles.status_code == 200
+    for selector in (".arch-node", ".documentation-hero", ".workflow-graphic"):
+        assert selector in styles.text
 
 
 def test_architecture_nodes_are_consistent_with_the_repository():

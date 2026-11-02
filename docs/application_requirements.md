@@ -1,5 +1,7 @@
 # Trading Journal MCP Application Requirements
 
+Current implementation update: November 1, 2026. Alpaca is the default quote provider using saved keys. Yahoo Finance remains the news source and an optional quote adapter. IBKR connectivity is deferred. See [the current market-data workflow](market_data_workflow.md) for the implemented contract and limits.
+
 ## 1. Purpose
 
 The accepted proposal treated the current Trading Journal codebase as a prototype. The next phase is to build the actual application: a full-fledged Python-based trading journal and MCP system for portfolio tracking, trade journaling, market data, stock news, broker connectivity, and controlled trade execution.
@@ -31,12 +33,12 @@ The application should remain local-first during development. Internet deploymen
 
 ## 3. Recommended V1 Strategy
 
-V1 should use Interactive Brokers as the primary broker/trading integration because the user already chose an IBKR-first direction. The app should keep manual Fidelity holdings as a supported manual account type, because Fidelity import/sync is not part of the first real version.
+The current V1 uses Alpaca for market snapshots and Yahoo Finance for stock news, with manual holdings and trade entry. Interactive Brokers remains the intended future broker integration, but real account synchronization and execution are deferred roadmap work. Manual Fidelity holdings remain supported through manual entry or CSV import.
 
 V1 should separate the system into these MCP-capable services:
 
 - Trading Journal MCP Server: accounts, instruments, journal entries, trades, positions, P&L, reports.
-- Market Data MCP Server: live quotes, snapshots, quote health, provider capability checks.
+- Market Data MCP Server: timestamped quote snapshots, quote status, provider capability checks; guaranteed live feeds are a future requirement.
 - News MCP Server: symbol-specific news, portfolio news, sentiment metadata where available.
 - Broker MCP Server: broker accounts, synced positions, orders, executions, order preview, order submission.
 - MCP Client Console: lightweight UI and CLI clients that discover tools/resources/prompts and call them.
@@ -57,8 +59,8 @@ The prototype already includes:
 - Average-cost position accounting.
 - Realized and unrealized P&L.
 - Dashboard P&L by total, account, and asset class.
-- Alpaca-backed market-data MCP server for stocks, ETFs, and options where supported.
-- Browser-based Alpaca settings screen for local key entry, feed selection, and masked credential status.
+- Alpaca market-data MCP snapshots for stocks, ETFs, and options using saved keys; Yahoo quotes remain optional.
+- Provider-neutral Market Data Settings screen with Alpaca key entry, feed selection, and masked credential status.
 - Trading Journal MCP server for account, trade, position, summary, resources, and prompts.
 - Internal MCP client behavior from the web app to the market-data MCP server.
 - CLI demo client for MCP discovery and tool calls.
@@ -230,34 +232,41 @@ Required dashboard views:
 
 The dashboard shall clearly label whether prices are live, delayed, end-of-day, manual, or unavailable.
 
-### 6.8 Live Market Data
+### 6.8 External Market Data And Quote Freshness
 
 The application shall retrieve external market data for open and closed positions.
 
 V1 provider strategy:
 
-- IBKR should be the preferred source for broker-connected accounts because it can provide account-aware portfolio and market data when the user has the proper session and entitlements.
-- Alpaca may remain available as a secondary market-data provider for stocks, ETFs, and options during development.
+- Alpaca is the default quote source, selected by `TRADING_JOURNAL_MARKET_DATA_PROVIDER=alpaca` or an unset provider variable. Saved credentials are reused; missing keys produce a configuration error.
+- Yahoo quotes remain optional via `TRADING_JOURNAL_MARKET_DATA_PROVIDER=yahoo`, requiring no keys. Restart after changing the provider. There is no automatic fallback.
+- IBKR market data remains future work alongside broker connectivity; the seeded IBKR account name shall not imply a working connection.
 - Manual mark prices should remain available as a fallback.
 
 Market-data requirements:
 
 - Quote by symbol or broker contract ID.
 - Batch quotes for all open positions.
-- Bid, ask, midpoint, last price, previous close, day change, day change percentage.
-- Quote timestamp.
+- Last price and day change percentage when supplied or derivable from a valid previous close. Bid, ask, and midpoint are future/provider-specific fields and shall remain blank when unavailable; the Yahoo chart adapter does not supply them.
+- Source quote timestamp, distinct from fetch time. Yahoo uses the matching `regularMarketPrice` and `regularMarketTime` values.
 - Provider name.
 - Feed name or entitlement source.
 - Data freshness indicator.
 - Support warning when data is delayed or unavailable.
 - Refresh button for open positions.
 - Scheduled/background refresh in a later version.
+- Label Yahoo rows `SNAPSHOT`, with visible notes that data may be delayed. A successful fetch shall not imply a real-time feed.
+- Preserve successful rows when other symbols fail. Distinguish `NO_DATA`, provider `ERROR`, and `CURRENCY_MISMATCH` from a valid price.
+- Reject invalid, nonpositive, or untimestamped Yahoo prices; do not substitute a zero price or the fetch time.
+- Do not apply a quote in a different returned currency to a position without conversion. FX conversion is not implemented.
+- Preserve the existing MCP tool names, resource URI, prompt, and endpoint when changing providers.
 
 Important asset-class limits:
 
-- Stocks and ETFs can use live quote feeds when the user has provider access.
-- Options require an options data entitlement, such as OPRA for true U.S. options quotes.
+- Alpaca stocks/ETFs use the selected feed. IEX covers one exchange; SIP requires suitable access. Continuous streaming is not implemented.
+- Alpaca options use the selected feed. Indicative rows shall be labeled `INDICATIVE`; OPRA access is separate. Optional Yahoo contract-chart lookup is best effort and supplies neither option chains nor Greeks.
 - Mutual funds usually use daily NAV rather than live intraday quotes.
+- Mutual-fund NAV lookup is not implemented in the current provider.
 - Bonds may require specialized fixed-income data sources and should not be assumed to have simple live quotes.
 
 ### 6.9 Broker Connectivity
@@ -336,6 +345,9 @@ News fields:
 
 V1 news provider options:
 
+- Yahoo Finance public search is implemented as the default demo source. It is separate from the Yahoo chart quote adapter.
+- GDELT and synthetic `demo` providers are implemented alternatives.
+- Production API candidates, requiring separate review before adoption:
 - Polygon.io stock news endpoint.
 - Finnhub company-news endpoint.
 - Alpha Vantage NEWS_SENTIMENT endpoint.
@@ -648,7 +660,7 @@ Important design rule: broker-sourced records should keep external IDs so sync c
 ```mermaid
 flowchart TD
     A["Open Trading Journal"] --> B["Dashboard loads accounts, positions, P&L"]
-    B --> C["Refresh live market data through Market Data MCP"]
+    B --> C["Request Alpaca snapshots through Market Data MCP using saved keys"]
     C --> D["Review news through News MCP"]
     D --> E["Review open positions and risk"]
     E --> F{"Need trade action?"}
@@ -699,11 +711,13 @@ flowchart LR
 
 ### Milestone 3: Market Data MCP Server
 
+- Use Alpaca as the default adapter with saved keys. `Restored November 1, 2026; optional Yahoo adapter retained.`
 - Keep Alpaca provider as one implementation.
 - Add local Alpaca settings UI for credentials and feed selection. `Complete in prototype path.`
-- Add IBKR market-data provider interface.
-- Add quote freshness and entitlement status.
-- Store quote snapshots.
+- Add provider-neutral settings at `/settings/market-data`. `Implemented; Alpaca key management linked.`
+- Add IBKR market-data provider interface. `Deferred with broker integration.`
+- Add quote freshness and entitlement status. `Yahoo source timestamps and snapshot labels implemented; automated stale thresholds pending.`
+- Store quote snapshots. `Pending; explicit refresh currently persists position marks, not a quote archive.`
 
 ### Milestone 4: News MCP Server
 
@@ -747,7 +761,7 @@ These decisions should be made before heavy implementation:
 
 - Whether IBKR Web API or TWS API will be the first live broker path.
 - Whether actual trade execution should be in V1 or V2 after paper trading is stable.
-- Which news provider to implement first.
+- Which production-approved news and market-data providers should replace or supplement the Yahoo demo sources.
 - Whether to keep SQLite for the local full app or move to Postgres earlier.
 - Whether the MCP servers should remain mounted inside the FastAPI app or become separately running services.
 - Whether to add user login before or after local broker sync.
@@ -759,7 +773,7 @@ Recommended for the next build step:
 - Keep FastAPI and Python as the base.
 - Keep SQLite for local development.
 - Add provider interfaces before adding more external APIs.
-- Implement News MCP next because it is useful, visible, and lower risk than live trading.
+- Retain the implemented Yahoo quote/news MCP paths while expanding audit coverage and quote/news persistence.
 - Implement IBKR broker status/account discovery before any order placement.
 - Implement order staging and preview before order submission.
 - Keep live trading disabled until paper trading and audit logs are fully tested.
@@ -767,6 +781,8 @@ Recommended for the next build step:
 ## 13. Reference Sources
 
 - Model Context Protocol specification: https://modelcontextprotocol.io/specification/2025-06-18
+- Current Yahoo integration and source references: [Market Data Workflow](market_data_workflow.md)
+- Yahoo chart request reference (the app uses HTTPX directly): https://github.com/ranaroussi/yfinance/blob/main/yfinance/scrapers/history.py
 - MCP server features and tools: https://modelcontextprotocol.io/specification/2025-06-18/server/tools
 - Interactive Brokers API documentation: https://www.interactivebrokers.com/docs
 - Interactive Brokers Web API introduction: https://www.interactivebrokers.com/docs/web-api/v1/endpoints/introduction

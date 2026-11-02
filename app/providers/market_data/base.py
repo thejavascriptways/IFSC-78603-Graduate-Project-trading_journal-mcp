@@ -8,7 +8,7 @@ class MarketDataProviderError(Exception):
 
 
 class MarketDataProvider(Protocol):
-    """Contract implemented by market-data providers such as Alpaca or IBKR."""
+    """Contract implemented by Yahoo Finance and optional market-data providers."""
 
     name: str
 
