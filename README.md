@@ -521,3 +521,7 @@ The next implementation step is to continue Phase 2 by expanding audit coverage:
 5. Add migration tooling before the schema grows much further.
 
 This foundation should be completed before IBKR broker sync, paper trading, or any future live trading workflow.
+
+## Architecture tab
+
+Open `/architecture` (top navigation: **Architecture**) for an interactive block diagram of the browser, FastAPI app, five MCP servers and data providers. Hover over or tab to any box to see what it does, the MCP tools/resources/prompts it exposes, and where it lives in the code. Diagram content lives in `app/architecture.py`.
